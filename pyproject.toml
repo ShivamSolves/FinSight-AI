@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finsight-ai"
+version = "0.1.0"
+description = "FinSight AI — a retrieval-augmented personal-finance assistant that answers natural-language questions about your bank statements."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Shivam Prakash", email = "justshivam1@gmail.com" }]
+keywords = ["rag", "finance", "llm", "chromadb", "embeddings"]
+
+dependencies = [
+    "pandas==2.2.2",
+    "python-dateutil==2.9.0",
+    "pdfplumber==0.11.0",
+    "sentence-transformers==3.0.1",
+    "chromadb==0.5.3",
+    "openai==1.35.7",
+    "python-dotenv==1.0.1",
+    "streamlit==1.36.0",
+    "scikit-learn==1.5.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+include = ["finsight*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]

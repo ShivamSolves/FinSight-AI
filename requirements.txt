@@ -1,0 +1,29 @@
+# FinSight AI — Phase 1 dependencies
+# Pin minor versions so the project is reproducible on any machine.
+
+# Data handling
+pandas==2.2.2
+python-dateutil==2.9.0
+
+# PDF extraction — reserved for Phase 2 (pdf_extractor.py).
+# Not used in Phase 1 (CSV-only). Install now so the environment is ready
+# when PDF ingestion is added. Safe to skip if you want a leaner install.
+pdfplumber==0.11.0
+
+# Local embeddings (no API key needed)
+sentence-transformers==3.0.1
+
+# Vector store
+chromadb==0.5.3
+
+# LLM answer generation (OpenAI client works for GPT-4o-mini)
+openai==1.35.7
+
+# Environment variable management (.env file support)
+python-dotenv==1.0.1
+
+# UI (wired up last)
+streamlit==1.36.0
+
+# Evaluation helpers
+scikit-learn==1.5.1
