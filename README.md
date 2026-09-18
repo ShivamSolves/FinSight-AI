@@ -112,11 +112,13 @@ FinSight AI/
 │   │   ├── query_parser.py        # question → structured retrieval plan
 │   │   ├── qa_pipeline.py         # retrieve → prompt → grounded answer
 │   │   └── local_answer.py        # deterministic offline answer (no LLM)
+│   ├── synthetic_statement.py     # seeded generator for realistic ledgers
 │   └── evaluation/                # golden dataset, metrics, eval runner
 ├── app/
 │   └── app.py                     # Streamlit UI: ask / dashboard / transactions
 ├── scripts/
 │   ├── ingest.py                  # CLI: CSV → clean CSV/Parquet + summary
+│   ├── generate_statement.py      # CLI: reproducible synthetic statement
 │   ├── run_evaluation.py          # CLI: offline retrieval eval (+ --llm)
 │   └── test_*.py                  # runnable smoke demos
 ├── tests/                         # pytest suite (unit + integration)
@@ -160,6 +162,12 @@ to switch answer phrasing to the LLM.
 **Ingest a statement:**
 ```bash
 python scripts/ingest.py --input data/raw/bank_statement.csv
+```
+
+**Generate a synthetic statement** (real bank data is never public, so the
+generator produces reproducible ledgers — same seed ⇒ same CSV — at any size):
+```bash
+python scripts/generate_statement.py --months 12 --seed 42
 ```
 
 **Evaluate retrieval (offline, no key):**
