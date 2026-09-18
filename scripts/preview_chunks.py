@@ -2,10 +2,11 @@
 Preview the exact text that will be stored as embedding chunks.
 Run: python scripts/preview_chunks.py
 """
-from finsight.ingestion.csv_extractor import load_csv
-from finsight.categorization.categorizer import categorize_dataframe
-
 import logging
+
+from finsight.categorization.categorizer import categorize_dataframe
+from finsight.ingestion.csv_extractor import load_csv
+
 logging.disable(logging.CRITICAL)   # suppress INFO noise for this preview
 
 df = load_csv("data/raw/bank_statement.csv")
@@ -26,7 +27,6 @@ def build_chunk(row) -> str:
     )
 
 # ── Show 4 representative samples ─────────────────────────────────────────
-import re
 sample_patterns = [
     ("Groceries",     r"Bigbasket|Dmart"),
     ("Transport",     r"Ola Cabs|Uber India"),

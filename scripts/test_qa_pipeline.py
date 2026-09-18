@@ -21,9 +21,9 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)-8s %(message)s")
 
-from finsight.ingestion.csv_extractor import load_csv
 from finsight.categorization.categorizer import categorize_dataframe
 from finsight.embeddings.vector_store import build_vector_store
+from finsight.ingestion.csv_extractor import load_csv
 from finsight.rag.qa_pipeline import ask
 
 SEP  = "═" * 72
@@ -112,7 +112,7 @@ for entry in QUESTIONS:
             f"₹{abs(m['amount']):>9,.2f}  [{m['category']}]  dist={hit['distance']:.3f}"
         )
 
-    print(f"\n  LLM ANSWER:")
+    print("\n  LLM ANSWER:")
     print(f"  {SEP2[:50]}")
     # Indent every line of the answer for clean terminal display
     for line in result.answer.splitlines():

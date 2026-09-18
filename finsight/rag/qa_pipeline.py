@@ -38,18 +38,18 @@ import logging
 from dataclasses import dataclass
 
 from finsight.config import (
-    LLM_PROVIDER,
-    LLM_MODEL,
-    TOP_K_RESULTS,
-    CURRENCY_SYMBOL,
     CURRENCY_NAME,
+    CURRENCY_SYMBOL,
+    LLM_MODEL,
+    LLM_PROVIDER,
+    TOP_K_RESULTS,
 )
 from finsight.embeddings.vector_store import (
-    query_vector_store,
     build_vector_store,
     get_collection_count,
+    query_vector_store,
 )
-from finsight.rag.query_parser import parse_query, build_where
+from finsight.rag.query_parser import build_where, parse_query
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +233,44 @@ def _call_llm(system_prompt: str, user_message: str) -> str:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+def retrieve(question: str, n_results: int | None = None) -> tuple[list[dict], "object", bool]:
+    """
+    Run the parse → filter → retrieve path and return the matching transactions.
+
+    This is the retrieval half of ask(), factored out so the evaluation module
+    and tests exercise the exact same code path the LLM sees.
+
+    Returns:
+        (hits, parsed, complete) where `parsed` is the ParsedQuery plan and
+        `complete` is True when the retriever fetched the full matching set
+        (rather than a relevance-ranked top-K sample).
+    """
+    parsed = parse_query(question)
+    where  = build_where(parsed)
+
+    # When the question needs a COMPLETE set (aggregate or hard filter), ignore
+    # the top-K cutoff and fetch every matching row so totals are exact.
+    complete = parsed.wants_all
+    if n_results is None:
+        n_results = get_collection_count() if complete else TOP_K_RESULTS
+    elif complete:
+        n_results = max(n_results, get_collection_count())
+
+    logger.info(
+        f"  Parsed → intent={parsed.intent} merchant={parsed.merchant} "
+        f"categories={parsed.categories} months={parsed.months or parsed.month_nums} "
+        f"wants_all={parsed.wants_all}"
+    )
+
+    hits = query_vector_store(
+        question,
+        n_results=n_results,
+        where=where,
+        merchant=parsed.merchant,
+    )
+    return hits, parsed, complete
+
+
 def ask(question: str, n_results: int | None = None) -> AnswerResult:
     """
     Answer a natural language question about transactions using RAG.
@@ -245,45 +283,24 @@ def ask(question: str, n_results: int | None = None) -> AnswerResult:
         question:  Plain English question, e.g. "How much did I spend on
                    Swiggy in January?"
         n_results: Number of chunks to retrieve (default: TOP_K_RESULTS
-                   from config.py, currently 10).
+                   from config.py, currently 10). Aggregate/filtered questions
+                   override this to fetch the complete matching set.
 
     Returns:
         AnswerResult with .answer, .evidence, and .raw_response fields.
     """
-    if n_results is None:
-        n_results = TOP_K_RESULTS
-
     logger.info(f"Question: {question!r}")
-
-    # ── 0. Parse the question into a retrieval plan ──────────────────────────
-    parsed = parse_query(question)
-    where  = build_where(parsed)
-    logger.info(
-        f"  Parsed → intent={parsed.intent} merchant={parsed.merchant} "
-        f"categories={parsed.categories} months={parsed.months or parsed.month_nums} "
-        f"wants_all={parsed.wants_all}"
-    )
-
-    # When the question needs a COMPLETE set (aggregate or hard filter), ignore
-    # the top-K cutoff and fetch every matching row so totals are exact.
-    complete = parsed.wants_all
-    if complete:
-        n_results = get_collection_count() or n_results
 
     # ── 1. Retrieve relevant transactions ─────────────────────────────────────
     try:
-        hits = query_vector_store(
-            question,
-            n_results=n_results,
-            where=where,
-            merchant=parsed.merchant,
-        )
+        hits, parsed, complete = retrieve(question, n_results=n_results)
     except Exception as e:
         msg = f"Vector store query failed: {e}. Has build_vector_store() been run?"
         logger.error(msg)
+        scope = parse_query(question).describe_scope()
         return AnswerResult(
             question=question, answer="", evidence=[], n_chunks_used=0,
-            model=LLM_MODEL, error=msg, scope=parsed.describe_scope(),
+            model=LLM_MODEL, error=msg, scope=scope,
         )
 
     logger.info(f"  Retrieved {len(hits)} chunks (filter: {parsed.describe_scope()})")

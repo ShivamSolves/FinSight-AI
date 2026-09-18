@@ -17,8 +17,8 @@ Design goals:
     not silently downstream.
 """
 
-import re
 import logging
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -96,33 +96,46 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     Uses CSV_COLUMN_ALIASES from config.py to match column headers
     case-insensitively.
+
+    Ordering matters: the alias table maps BOTH "debit" and "credit" to
+    "amount", so split columns must be merged first — otherwise the alias
+    rename collides two source columns onto the same "amount" name.
     """
-    # Build a lookup: lowercase_alias → standard_name
+    df = df.copy()
+    col_lower = {c.lower().strip(): c for c in df.columns}  # lowercase → original name
+
+    # ── 1. Merge split debit/credit BEFORE alias renaming ─────────────────────
+    single_amount_aliases = [a for a in CSV_COLUMN_ALIASES["amount"] if a not in ("debit", "credit")]
+    has_split         = "debit" in col_lower and "credit" in col_lower
+    has_single_amount = any(a in col_lower for a in single_amount_aliases)
+
+    if has_split and not has_single_amount:
+        dcol, ccol = col_lower["debit"], col_lower["credit"]
+        logger.info("  Detected split debit/credit columns — merging into 'amount'")
+        debit  = pd.to_numeric(df[dcol].astype(str).str.replace(r"[^\d.\-]", "", regex=True), errors="coerce").fillna(0)
+        credit = pd.to_numeric(df[ccol].astype(str).str.replace(r"[^\d.\-]", "", regex=True), errors="coerce").fillna(0)
+        # Convention: debits are money out (negative), credits are money in (positive)
+        df = df.drop(columns=[dcol, ccol])
+        df["amount"] = credit - debit
+        col_lower = {c.lower().strip(): c for c in df.columns}  # refresh after drop
+
+    # ── 2. Alias rename for the remaining columns ───────────────────────────
     alias_lookup = {}
     for standard_name, aliases in CSV_COLUMN_ALIASES.items():
         for alias in aliases:
             alias_lookup[alias.lower()] = standard_name
 
-    col_lower = {c.lower(): c for c in df.columns}  # lowercase → original name
-
     rename_map = {}
     for lower_col, original_col in col_lower.items():
-        if lower_col in alias_lookup:
-            rename_map[original_col] = alias_lookup[lower_col]
+        if lower_col not in alias_lookup:
+            continue
+        # If a single 'amount' column already exists alongside debit/credit,
+        # don't also fold debit/credit onto it (would duplicate the name).
+        if has_split and has_single_amount and lower_col in ("debit", "credit"):
+            continue
+        rename_map[original_col] = alias_lookup[lower_col]
 
     df = df.rename(columns=rename_map)
-
-    # Handle split debit/credit columns → merge into single 'amount'
-    has_debit  = "debit"  in df.columns
-    has_credit = "credit" in df.columns
-
-    if has_debit and has_credit and "amount" not in df.columns:
-        logger.info("  Detected split debit/credit columns — merging into 'amount'")
-        df["debit"]  = pd.to_numeric(df["debit"].astype(str).str.replace(r"[^\d.\-]", "", regex=True), errors="coerce").fillna(0)
-        df["credit"] = pd.to_numeric(df["credit"].astype(str).str.replace(r"[^\d.\-]", "", regex=True), errors="coerce").fillna(0)
-        # Convention: debits are money out (negative), credits are money in (positive)
-        df["amount"] = df["credit"] - df["debit"]
-        df = df.drop(columns=["debit", "credit"])
 
     # Validate required columns exist
     required = ["date", "description", "amount"]
@@ -156,7 +169,7 @@ def _parse_dates(df: pd.DataFrame) -> pd.DataFrame:
 
     df["date"] = df["date"].apply(_safe_parse)
     before = len(df)
-    df = df.dropna(subset=["date"])
+    df = df.dropna(subset=["date"]).copy()
     dropped = before - len(df)
     if dropped:
         logger.warning(f"  Dropped {dropped} rows with unparseable dates.")
@@ -189,7 +202,7 @@ def _parse_amounts(df: pd.DataFrame) -> pd.DataFrame:
 
     df["amount"] = df["amount"].apply(_clean_amount)
     before = len(df)
-    df = df.dropna(subset=["amount"])
+    df = df.dropna(subset=["amount"]).copy()
     dropped = before - len(df)
     if dropped:
         logger.warning(f"  Dropped {dropped} rows with unparseable amounts.")

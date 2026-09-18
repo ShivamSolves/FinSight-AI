@@ -30,7 +30,6 @@ from dataclasses import dataclass, field
 
 from finsight.config import CATEGORIES
 
-
 # ── Month vocabulary ──────────────────────────────────────────────────────────
 # name/abbrev (lowercase) → month number. Abbreviations are matched on a word
 # boundary so "mar" doesn't fire inside "market".

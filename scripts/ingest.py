@@ -18,7 +18,7 @@ import logging
 import sys
 from pathlib import Path
 
-from finsight.config import RAW_DIR, PROCESSED_DIR, CURRENCY_SYMBOL
+from finsight.config import CURRENCY_SYMBOL, PROCESSED_DIR, RAW_DIR
 from finsight.ingestion.csv_extractor import load_csv
 
 # ── Logging setup ─────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ def print_summary(df) -> None:
     print(f"  Net cash flow      :             {CURRENCY_SYMBOL}{df['amount'].sum():>10,.2f}")
 
     # Monthly breakdown
-    print(f"\n  Monthly breakdown:")
+    print("\n  Monthly breakdown:")
     df["month"] = df["date"].dt.to_period("M")
     monthly = (
         df.groupby("month")["amount"]
@@ -88,7 +88,7 @@ def print_summary(df) -> None:
         )
 
     # Sample: first 10 rows
-    print(f"\n  First 10 transactions:")
+    print("\n  First 10 transactions:")
     print(f"  {'DATE':<12} {'DESCRIPTION':<45} {'AMOUNT':>10}  TYPE")
     print(f"  {'─'*12} {'─'*45} {'─'*10}  {'─'*6}")
     for _, row in df.head(10).iterrows():

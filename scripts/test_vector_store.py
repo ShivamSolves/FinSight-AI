@@ -6,9 +6,9 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)-8s %(message)s")
 
-from finsight.ingestion.csv_extractor import load_csv
 from finsight.categorization.categorizer import categorize_dataframe
 from finsight.embeddings.vector_store import build_vector_store, query_vector_store
+from finsight.ingestion.csv_extractor import load_csv
 
 # ── 1. Build the store ────────────────────────────────────────────────────────
 print("\nStep 1 — Ingesting and categorizing transactions...")

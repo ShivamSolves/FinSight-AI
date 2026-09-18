@@ -26,9 +26,7 @@ Public API
   categorize_dataframe(df: pd.DataFrame) -> pd.DataFrame
 """
 
-import re
 import logging
-from pathlib import Path
 
 import pandas as pd
 
@@ -104,6 +102,7 @@ RULES: list[tuple[str, list[str]]] = [
         "star bazaar",
         "hypercity",
         "grocery",
+        "groceries",
         "supermarket",
         "kirana",
         "vegetables",

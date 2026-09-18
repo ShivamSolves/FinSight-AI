@@ -57,6 +57,7 @@ def _get_embedder():
     global _embedder
     if _embedder is None:
         from sentence_transformers import SentenceTransformer
+
         from finsight.config import EMBEDDING_MODEL
         logger.info(f"Loading embedding model: {EMBEDDING_MODEL}")
         _embedder = SentenceTransformer(EMBEDDING_MODEL)
@@ -69,6 +70,7 @@ def _get_chroma_client():
     global _chroma_client
     if _chroma_client is None:
         import chromadb
+
         from finsight.config import CHROMA_DIR
         CHROMA_DIR.mkdir(parents=True, exist_ok=True)
         _chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))

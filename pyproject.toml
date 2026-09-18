@@ -37,6 +37,10 @@ include = ["finsight*"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-ra"
+markers = [
+    "integration: tests that build the vector store / download the embedding model (slow, need network on first run)",
+    "llm: tests that call a real LLM and require OPENAI_API_KEY (auto-skipped when the key is absent)",
+]
 
 [tool.ruff]
 line-length = 100
@@ -45,3 +49,7 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# CLI/demo scripts configure logging before importing finsight modules.
+"scripts/*" = ["E402"]

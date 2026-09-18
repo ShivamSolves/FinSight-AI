@@ -11,8 +11,9 @@ the exact transactions it used, so every number is verifiable.
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-Phase%201-orange)
+[![CI](https://github.com/ShivamSolves/FinSight-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/ShivamSolves/FinSight-AI/actions/workflows/ci.yml)
 
-<!-- TODO: add demo GIF and CI badge once GitHub Actions + Streamlit UI land -->
+<!-- TODO: add demo GIF once the Streamlit UI lands -->
 
 </div>
 
@@ -74,9 +75,9 @@ rather than silently truncated.
   cutoff silently drops transactions and corrupts the total.
 - **100% local embeddings.** `all-MiniLM-L6-v2` + ChromaDB run offline — no API
   cost or key needed to index and retrieve.
-- **Offline verification.** `scripts/verify_retrieval.py` proves retrieval
-  correctness against CSV ground truth with **no LLM call**, so the core is
-  testable without an API key.
+- **Offline evaluation.** `finsight/evaluation/` + `scripts/run_evaluation.py`
+  score retrieval recall, precision, and total accuracy against CSV ground
+  truth with **no LLM call** — so correctness is provable without an API key.
 - **Honest categorization.** Unmatched transactions are flagged `Uncategorized`
   (surfaced for review) rather than buried in a catch-all.
 - **Tolerant ingestion.** Handles column-name variants, multiple date formats,
@@ -84,8 +85,8 @@ rather than silently truncated.
 
 ## Retrieval accuracy (verified offline)
 
-`python scripts/verify_retrieval.py` compares retrieved totals against the CSV.
-All cases return the **complete** matching set:
+`python scripts/run_evaluation.py` scores retrieved sets against the CSV.
+All golden cases return the **complete** matching set (recall 1.00):
 
 | Question | Filter applied | Txns | Total | |
 |---|---|---:|---:|:--:|
@@ -107,15 +108,17 @@ FinSight AI/
 │   ├── ingestion/csv_extractor.py # messy CSV → clean DataFrame
 │   ├── categorization/categorizer.py  # ordered rule engine
 │   ├── embeddings/vector_store.py # chunking, ChromaDB build/query, filters
-│   └── rag/
-│       ├── query_parser.py        # question → structured retrieval plan
-│       └── qa_pipeline.py         # retrieve → prompt → grounded answer
+│   ├── rag/
+│   │   ├── query_parser.py        # question → structured retrieval plan
+│   │   └── qa_pipeline.py         # retrieve → prompt → grounded answer
+│   └── evaluation/                # golden dataset, metrics, eval runner
 ├── scripts/
 │   ├── ingest.py                  # CLI: CSV → clean CSV/Parquet + summary
-│   ├── verify_retrieval.py        # offline correctness check (no LLM)
+│   ├── run_evaluation.py          # CLI: offline retrieval eval (+ --llm)
 │   └── test_*.py                  # runnable smoke demos
+├── tests/                         # pytest suite (unit + integration)
+├── .github/workflows/ci.yml       # ruff + pytest + eval on push
 ├── data/                          # raw / processed / chroma_db (git-ignored)
-├── tests/                         # pytest suite
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -124,7 +127,7 @@ FinSight AI/
 
 ```bash
 # 1. Clone and enter the project
-git clone <your-repo-url> && cd "FinSight AI"
+git clone https://github.com/ShivamSolves/FinSight-AI.git && cd FinSight-AI
 
 # 2. Create a virtual environment
 python -m venv .venv
@@ -132,13 +135,13 @@ source .venv/Scripts/activate        # Windows Git Bash
 # source .venv/bin/activate          # macOS/Linux
 
 # 3. Install (editable, so `finsight` is importable everywhere)
-pip install -e .                      # or: pip install -r requirements.txt
+pip install -e ".[dev]"               # or: pip install -e .  (runtime only)
 
 # 4. (Only needed for answer generation) add your LLM key
 cp .env.example .env                  # then put OPENAI_API_KEY=sk-... inside
 ```
 
-> Retrieval, categorization, and `verify_retrieval.py` work **without** any API
+> Retrieval, categorization, and the evaluation harness work **without** any API
 > key. The key is only used by `qa_pipeline.ask()` for final answer generation.
 
 ## Usage
@@ -148,9 +151,10 @@ cp .env.example .env                  # then put OPENAI_API_KEY=sk-... inside
 python scripts/ingest.py --input data/raw/bank_statement.csv
 ```
 
-**Verify retrieval (offline, no key):**
+**Evaluate retrieval (offline, no key):**
 ```bash
-python scripts/verify_retrieval.py
+python scripts/run_evaluation.py          # retrieval recall/precision/totals
+python scripts/run_evaluation.py --llm    # + score real LLM answers (needs key)
 ```
 
 **Ask questions (needs `OPENAI_API_KEY`):**
@@ -169,18 +173,21 @@ print(result.scope)    # the metadata filter that was applied
 ## Testing
 
 ```bash
-pytest                 # unit + retrieval tests
-python scripts/verify_retrieval.py   # end-to-end retrieval correctness
+ruff check .           # lint
+pytest                 # unit tests + retrieval integration (builds the store)
+pytest -m "not integration"   # fast unit-only run
+python scripts/run_evaluation.py   # end-to-end retrieval correctness report
 ```
 
 ## Roadmap
 
 - [x] Phase 1 — CSV ingestion, categorization, embeddings, grounded RAG
 - [x] Metadata-filtered retrieval for exact aggregates
-- [ ] Evaluation harness with retrieval-recall + answer-accuracy metrics
+- [x] Evaluation harness (retrieval recall/precision + answer-accuracy scorer)
+- [x] pytest suite + GitHub Actions CI
 - [ ] Streamlit UI (upload → ask → visualize)
 - [ ] PDF bank-statement ingestion (`pdfplumber`)
-- [ ] CI (GitHub Actions) + public deployment
+- [ ] Public deployment
 
 ## Tech stack
 

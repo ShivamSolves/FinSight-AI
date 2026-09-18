@@ -4,14 +4,15 @@ Run: python scripts/test_categorizer.py
 Shows categorization on the full dataset + edge cases.
 """
 import logging
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)-8s %(message)s")
 
-from finsight.ingestion.csv_extractor import load_csv
 from finsight.categorization.categorizer import (
     categorize_dataframe,
     get_category_summary,
 )
 from finsight.config import PROCESSED_DIR
+from finsight.ingestion.csv_extractor import load_csv
 
 # ── Load clean data ────────────────────────────────────────────────────────
 df = load_csv("data/raw/bank_statement.csv")
@@ -71,9 +72,10 @@ synthetic_ambiguous = [
     "TRSF DR 77412",
 ]
 print(f"  {'─'*45} {'─'*20}")
-print(f"  Synthetic ambiguous cases:")
+print("  Synthetic ambiguous cases:")
 print(f"  {'─'*45} {'─'*20}")
 from finsight.categorization.categorizer import categorize_transaction
+
 for desc in synthetic_ambiguous:
     cat = categorize_transaction(desc)
     print(f"  {desc:<45} {cat:<20}")
