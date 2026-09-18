@@ -110,8 +110,11 @@ FinSight AI/
 │   ├── embeddings/vector_store.py # chunking, ChromaDB build/query, filters
 │   ├── rag/
 │   │   ├── query_parser.py        # question → structured retrieval plan
-│   │   └── qa_pipeline.py         # retrieve → prompt → grounded answer
+│   │   ├── qa_pipeline.py         # retrieve → prompt → grounded answer
+│   │   └── local_answer.py        # deterministic offline answer (no LLM)
 │   └── evaluation/                # golden dataset, metrics, eval runner
+├── app/
+│   └── app.py                     # Streamlit UI: ask / dashboard / transactions
 ├── scripts/
 │   ├── ingest.py                  # CLI: CSV → clean CSV/Parquet + summary
 │   ├── run_evaluation.py          # CLI: offline retrieval eval (+ --llm)
@@ -145,6 +148,14 @@ cp .env.example .env                  # then put OPENAI_API_KEY=sk-... inside
 > key. The key is only used by `qa_pipeline.ask()` for final answer generation.
 
 ## Usage
+
+**Launch the web app:**
+```bash
+streamlit run app/app.py
+```
+Upload your own CSV or click *Load sample statement*. The app gives grounded
+answers with **no API key** (deterministic local totals); add `OPENAI_API_KEY`
+to switch answer phrasing to the LLM.
 
 **Ingest a statement:**
 ```bash
@@ -185,7 +196,7 @@ python scripts/run_evaluation.py   # end-to-end retrieval correctness report
 - [x] Metadata-filtered retrieval for exact aggregates
 - [x] Evaluation harness (retrieval recall/precision + answer-accuracy scorer)
 - [x] pytest suite + GitHub Actions CI
-- [ ] Streamlit UI (upload → ask → visualize)
+- [x] Streamlit UI (upload → ask → visualize)
 - [ ] PDF bank-statement ingestion (`pdfplumber`)
 - [ ] Public deployment
 
