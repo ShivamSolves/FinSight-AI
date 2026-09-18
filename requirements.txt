@@ -5,9 +5,7 @@
 pandas==2.2.2
 python-dateutil==2.9.0
 
-# PDF extraction — reserved for Phase 2 (pdf_extractor.py).
-# Not used in Phase 1 (CSV-only). Install now so the environment is ready
-# when PDF ingestion is added. Safe to skip if you want a leaner install.
+# PDF extraction (pdf_extractor.py)
 pdfplumber==0.11.0
 
 # Local embeddings (no API key needed)
@@ -22,8 +20,9 @@ openai==1.35.7
 # Environment variable management (.env file support)
 python-dotenv==1.0.1
 
-# UI (wired up last)
+# UI (Streamlit app + charts)
 streamlit==1.36.0
+altair==5.5.0
 
 # Evaluation helpers
 scikit-learn==1.5.1

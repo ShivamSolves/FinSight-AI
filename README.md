@@ -10,10 +10,8 @@ the exact transactions it used, so every number is verifiable.
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%201-orange)
+![Status](https://img.shields.io/badge/status-active-brightgreen)
 [![CI](https://github.com/ShivamSolves/FinSight-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/ShivamSolves/FinSight-AI/actions/workflows/ci.yml)
-
-<!-- TODO: add demo GIF once the Streamlit UI lands -->
 
 </div>
 

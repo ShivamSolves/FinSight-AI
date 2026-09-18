@@ -1,0 +1,15 @@
+# Streamlit theming so native widgets match the FinSight brand palette.
+[theme]
+primaryColor = "#8b5cf6"
+backgroundColor = "#f8fafc"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#0f172a"
+font = "sans serif"
+
+[server]
+# Don't phone home with usage stats.
+gatherUsageStats = false
+
+[browser]
+# Don't try to open a tab when launched from a server / CI context.
+gatherUsageStats = false
