@@ -81,7 +81,8 @@ rather than silently truncated.
 - **Honest categorization.** Unmatched transactions are flagged `Uncategorized`
   (surfaced for review) rather than buried in a catch-all.
 - **Tolerant ingestion.** Handles column-name variants, multiple date formats,
-  `(50.00)` negatives, `$`/`₹` symbols, and split debit/credit columns.
+  `(50.00)` negatives, `$`/`₹` symbols, and split debit/credit columns — from
+  CSV **or** PDF (`pdfplumber` tables, headered or inferred positionally).
 
 ## Retrieval accuracy (verified offline)
 
@@ -106,6 +107,7 @@ FinSight AI/
 ├── finsight/
 │   ├── config.py                  # all paths, models, categories, constants
 │   ├── ingestion/csv_extractor.py # messy CSV → clean DataFrame
+│   ├── ingestion/pdf_extractor.py # bank PDF tables → same clean schema
 │   ├── categorization/categorizer.py  # ordered rule engine
 │   ├── embeddings/vector_store.py # chunking, ChromaDB build/query, filters
 │   ├── rag/
@@ -197,7 +199,7 @@ python scripts/run_evaluation.py   # end-to-end retrieval correctness report
 - [x] Evaluation harness (retrieval recall/precision + answer-accuracy scorer)
 - [x] pytest suite + GitHub Actions CI
 - [x] Streamlit UI (upload → ask → visualize)
-- [ ] PDF bank-statement ingestion (`pdfplumber`)
+- [x] PDF bank-statement ingestion (`pdfplumber`)
 - [ ] Public deployment
 
 ## Tech stack

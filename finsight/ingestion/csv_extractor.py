@@ -55,6 +55,16 @@ def load_csv(filepath: str | Path) -> pd.DataFrame:
     raw_df = _read_raw(filepath)
     logger.info(f"  Raw shape: {raw_df.shape} | Columns: {list(raw_df.columns)}")
 
+    return clean_transactions(raw_df)
+
+
+def clean_transactions(raw_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Apply the full cleaning chain to an already-read table.
+
+    Shared by the CSV and PDF extractors so both inputs converge on the same
+    schema: date, description, amount, transaction_type.
+    """
     df = _normalize_columns(raw_df)
     df = _parse_dates(df)
     df = _parse_amounts(df)

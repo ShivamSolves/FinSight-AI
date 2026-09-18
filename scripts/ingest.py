@@ -20,6 +20,7 @@ from pathlib import Path
 
 from finsight.config import CURRENCY_SYMBOL, PROCESSED_DIR, RAW_DIR
 from finsight.ingestion.csv_extractor import load_csv
+from finsight.ingestion.pdf_extractor import load_pdf
 
 # ── Logging setup ─────────────────────────────────────────────────────────────
 # INFO level gives us the per-step messages we added in csv_extractor.py
@@ -38,7 +39,7 @@ def parse_args() -> argparse.Namespace:
         "--input", "-i",
         type=Path,
         default=RAW_DIR / "bank_statement.csv",
-        help="Path to the raw bank statement CSV (default: data/raw/bank_statement.csv)",
+        help="Path to the raw bank statement CSV or PDF (default: data/raw/bank_statement.csv)",
     )
     parser.add_argument(
         "--output", "-o",
@@ -104,8 +105,9 @@ def main() -> None:
 
     # ── 1. Extract ─────────────────────────────────────────────────────────────
     logger.info(f"Starting ingestion: {args.input}")
+    loader = load_pdf if args.input.suffix.lower() == ".pdf" else load_csv
     try:
-        df = load_csv(args.input)
+        df = loader(args.input)
     except (FileNotFoundError, ValueError) as e:
         logger.error(str(e))
         sys.exit(1)

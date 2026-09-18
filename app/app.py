@@ -27,6 +27,7 @@ from finsight.config import CURRENCY_SYMBOL as S
 from finsight.config import RAW_DIR
 from finsight.embeddings.vector_store import build_vector_store
 from finsight.ingestion.csv_extractor import load_csv
+from finsight.ingestion.pdf_extractor import load_pdf
 from finsight.rag.local_answer import summarize_hits
 from finsight.rag.qa_pipeline import ask, retrieve
 
@@ -118,7 +119,8 @@ def _load_upload(name: str, data: bytes) -> pd.DataFrame:
     tmp = os.path.join(tempfile.gettempdir(), f"finsight_{name}")
     with open(tmp, "wb") as f:
         f.write(data)
-    return categorize_dataframe(load_csv(tmp))
+    loader = load_pdf if name.lower().endswith(".pdf") else load_csv
+    return categorize_dataframe(loader(tmp))
 
 
 @st.cache_data(show_spinner=False)
@@ -155,7 +157,8 @@ with st.sidebar:
                 unsafe_allow_html=True)
 
     st.markdown("**1 · Data source**")
-    uploaded = st.file_uploader("Upload a statement", type=["csv"], label_visibility="collapsed")
+    uploaded = st.file_uploader("Upload a statement (CSV or PDF)", type=["csv", "pdf"],
+                                label_visibility="collapsed")
     sample_path = RAW_DIR / "bank_statement.csv"
     if st.button("✨ Load sample statement", use_container_width=True,
                  disabled=not sample_path.exists()):
