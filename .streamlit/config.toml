@@ -1,10 +1,13 @@
-# Streamlit theming so native widgets match the FinSight brand palette.
+# Streamlit theming — dark "techy" base that the custom CSS in app/app.py builds on.
 [theme]
+base = "dark"
 primaryColor = "#8b5cf6"
-backgroundColor = "#f8fafc"
-secondaryBackgroundColor = "#ffffff"
-textColor = "#0f172a"
-font = "sans serif"
+backgroundColor = "#07070f"
+secondaryBackgroundColor = "#0d0d1a"
+textColor = "#e2e8f0"
+font = "Inter"
+headingFont = "Inter"
+codeFont = "JetBrains Mono"
 
 [server]
 # Don't phone home with usage stats.
