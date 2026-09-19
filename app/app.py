@@ -32,11 +32,13 @@ from finsight.rag.local_answer import summarize_hits
 from finsight.rag.qa_pipeline import ask, retrieve
 
 # ── Palette ──────────────────────────────────────────────────────────────────
-INDIGO, VIOLET, FUCHSIA = "#6366f1", "#8b5cf6", "#d946ef"
-GREEN, ROSE, SLATE = "#10b981", "#f43f5e", "#64748b"
+# Wondercraft-inspired: mint primary, teal-blue secondary, pastel chips on a
+# pale periwinkle canvas with navy ink.
+INDIGO, VIOLET, FUCHSIA = "#2f7494", "#6672d8", "#f3a9d3"
+GREEN, ROSE, SLATE = "#009f7a", "#e0567a", "#64748f"
 CATEGORY_COLORS = [
-    "#6366f1", "#8b5cf6", "#d946ef", "#ec4899", "#f43f5e", "#f97316",
-    "#f59e0b", "#10b981", "#14b8a6", "#06b6d4", "#3b82f6", "#a855f7", "#94a3b8",
+    "#00cf9e", "#2f7494", "#7fb5e6", "#bcc7f6", "#f3a9d3", "#ffd166",
+    "#8fe9cb", "#5a8ea6", "#e0567a", "#6672d8", "#aed7f2", "#f3cbe7", "#a3b1c6",
 ]
 
 st.set_page_config(
@@ -52,134 +54,112 @@ st.set_page_config(
 # CSS leaks onto the page as visible text.
 st.markdown(
     """<style>
-    html, body, [class*="css"] { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; }
+    html, body, [class*="css"] { font-family: 'Figtree', -apple-system, 'Segoe UI', sans-serif; }
     #MainMenu, footer, header {visibility: hidden;}
     .stApp {background: transparent;}
     .block-container {padding-top: 2rem; padding-bottom: 3rem; max-width: 1240px;}
-    h1,h2,h3,h4,h5,h6 {color:#e8ecf6 !important;}
-
-    /* ── animated tech background ─────────────────────────────────────────── */
-    .fs-bg {position:fixed; inset:0; z-index:-1; overflow:hidden; background:#07070f;}
-    .fs-bg .grid {
-        position:absolute; inset:0;
-        background-image:
-            linear-gradient(rgba(139,92,246,.09) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139,92,246,.09) 1px, transparent 1px);
-        background-size: 46px 46px;
-        mask-image: radial-gradient(ellipse 75% 65% at 50% 35%, #000 25%, transparent 78%);
-        animation: fs-drift 16s linear infinite;
+    h1,h2,h3,h4,h5,h6 {
+        font-family:'Bricolage Grotesque', 'Figtree', sans-serif;
+        color:#233048 !important; letter-spacing:-.02em;
     }
-    @keyframes fs-drift { from {background-position: 0 0, 0 0;} to {background-position: 0 46px, 46px 0;} }
-    .fs-bg .orb {position:absolute; border-radius:50%; filter:blur(95px);}
-    .fs-bg .o1 {width:540px; height:540px; left:-150px; top:-170px; background:#7c3aed; opacity:.42;
-                animation: fs-float 15s ease-in-out infinite;}
-    .fs-bg .o2 {width:470px; height:470px; right:-130px; bottom:-150px; background:#0891b2; opacity:.34;
-                animation: fs-float 19s ease-in-out infinite reverse;}
-    .fs-bg .o3 {width:320px; height:320px; left:56%; top:26%; background:#db2777; opacity:.20;
-                animation: fs-float 23s ease-in-out infinite;}
-    @keyframes fs-float {0%,100% {transform:translate(0,0);} 50% {transform:translate(46px,-34px);}}
+
+    /* ── pastel wondercraft background ──────────────────────────────────── */
+    .fs-bg {position:fixed; inset:0; z-index:-1; overflow:hidden; background:#f5f6fc;}
+    .fs-bg .wash {position:absolute; border-radius:50%; filter:blur(110px);}
+    .fs-bg .w1 {width:560px; height:560px; left:-160px; top:-180px; background:#8fe9cb; opacity:.35;
+                animation: fs-float 18s ease-in-out infinite;}
+    .fs-bg .w2 {width:520px; height:520px; right:-150px; bottom:-170px; background:#aed7f2; opacity:.40;
+                animation: fs-float 22s ease-in-out infinite reverse;}
+    .fs-bg .chip {position:absolute; border-radius:26px; opacity:.45;
+                  animation: fs-bob 14s ease-in-out infinite;}
+    .fs-bg .c1 {width:120px; height:86px; left:7%;  top:16%; background:#aed7f2; transform:rotate(-8deg);}
+    .fs-bg .c2 {width:96px;  height:70px; left:79%; top:10%; background:#8fe9cb; transform:rotate(7deg);
+                animation-delay:-4s;}
+    .fs-bg .c3 {width:110px; height:78px; left:66%; top:64%; background:#f3cbe7; transform:rotate(-6deg);
+                animation-delay:-8s;}
+    .fs-bg .c4 {width:84px;  height:62px; left:15%; top:72%; background:#bcc7f6; transform:rotate(9deg);
+                animation-delay:-11s;}
+    @keyframes fs-float {0%,100% {transform:translate(0,0);} 50% {transform:translate(40px,-30px);}}
+    @keyframes fs-bob  {0%,100% {margin-top:0;} 50% {margin-top:-22px;}}
 
     /* ── hero ─────────────────────────────────────────────────────────────── */
     .hero {
-        position:relative; overflow:hidden; border-radius:22px;
-        padding:2.3rem 2.5rem; margin-bottom:1.5rem;
-        background:linear-gradient(140deg, rgba(124,58,237,.30), rgba(8,145,178,.14) 55%, rgba(219,39,119,.20));
-        border:1px solid rgba(139,92,246,.35);
-        box-shadow:0 0 70px -22px rgba(124,58,237,.65), inset 0 1px 0 rgba(255,255,255,.08);
-        backdrop-filter: blur(14px);
-    }
-    .hero::before {
-        content:""; position:absolute; inset:0;
-        background-image:
-            linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
-        background-size:34px 34px;
-        mask-image: radial-gradient(ellipse at 18% 0%, #000, transparent 72%);
+        position:relative; overflow:hidden; border-radius:26px;
+        padding:2.4rem 2.6rem; margin-bottom:1.5rem;
+        background:#ffffff; border:1px solid #e9ecf7;
+        box-shadow:0 24px 60px -30px rgba(35,48,72,.25);
     }
     .hero::after {
-        content:""; position:absolute; top:0; left:0; right:0; height:2px;
-        background:linear-gradient(90deg, transparent, #22d3ee, #8b5cf6, #d946ef, transparent);
+        content:""; position:absolute; top:0; left:0; right:0; height:4px;
+        background:linear-gradient(90deg,#00cf9e,#7fb5e6,#f3a9d3);
     }
-    .hero h1 {
-        position:relative; font-size:2.7rem; font-weight:800; margin:0; letter-spacing:-.03em;
-        background:linear-gradient(92deg, #ffffff 8%, #c4b5fd 48%, #67e8f9 92%);
-        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    }
+    .hero h1 {position:relative; font-size:2.7rem; font-weight:700; margin:0;}
     .hero h1 a, .hero a {display:none;}
-    .hero p  {position:relative; color:#aab3c8; font-size:1.02rem; margin:.55rem 0 0; font-weight:400;}
+    .hero p  {position:relative; color:#64748f; font-size:1.04rem; margin:.6rem 0 0; font-weight:400;}
     .hero .tag {
-        position:relative; display:inline-block; font-family:'JetBrains Mono', monospace;
-        color:#67e8f9; background:rgba(34,211,238,.10); border:1px solid rgba(34,211,238,.38);
-        padding:.24rem .72rem; border-radius:8px; font-size:.72rem; font-weight:600;
-        letter-spacing:.14em; text-transform:uppercase; margin-bottom:.85rem;
+        position:relative; display:inline-block; color:#009f7a; background:#e4faf3;
+        border:1px solid #b5ecd9; padding:.26rem .8rem; border-radius:999px;
+        font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+        margin-bottom:.9rem;
     }
 
-    /* ── glass KPI cards ──────────────────────────────────────────────────── */
+    /* ── KPI cards ────────────────────────────────────────────────────────── */
     .kpi {
-        position:relative; overflow:hidden; height:100%;
-        background:rgba(13,13,26,.62); border:1px solid rgba(139,92,246,.20);
-        border-radius:16px; padding:1.15rem 1.3rem; backdrop-filter: blur(12px);
+        height:100%; background:#ffffff; border:1px solid #e9ecf7;
+        border-radius:20px; padding:1.2rem 1.35rem;
+        box-shadow:0 14px 34px -24px rgba(35,48,72,.28);
     }
-    .kpi::before {
-        content:""; position:absolute; top:0; left:0; right:0; height:2px;
-        background:linear-gradient(90deg, rgba(34,211,238,0), rgba(139,92,246,.85), rgba(34,211,238,0));
-    }
-    .kpi .label {font-family:'JetBrains Mono', monospace; color:#7c86a0; font-size:.7rem;
-                 font-weight:600; text-transform:uppercase; letter-spacing:.14em;}
-    .kpi .value {font-family:'JetBrains Mono', monospace; font-size:1.62rem; font-weight:700;
-                 margin-top:.4rem; letter-spacing:-.02em;
-                 text-shadow:0 0 22px color-mix(in srgb, currentColor 45%, transparent);}
-    .kpi .sub   {font-family:'JetBrains Mono', monospace; font-size:.74rem; color:#6b7590; margin-top:.2rem;}
+    .kpi .label {color:#7a8699; font-size:.72rem; font-weight:700;
+                 text-transform:uppercase; letter-spacing:.12em;}
+    .kpi .value {font-family:'Bricolage Grotesque', 'Figtree', sans-serif;
+                 font-size:1.72rem; font-weight:700; margin-top:.35rem; letter-spacing:-.02em;}
+    .kpi .sub   {font-size:.78rem; color:#7a8699; margin-top:.2rem;}
 
     /* ── badges ───────────────────────────────────────────────────────────── */
     .scope-badge {
-        display:inline-block; font-family:'JetBrains Mono', monospace;
-        background:rgba(139,92,246,.14); color:#c4b5fd; border:1px solid rgba(139,92,246,.42);
-        border-radius:8px; padding:.22rem .62rem; font-size:.72rem; font-weight:600; margin-right:.4rem;
+        display:inline-block; background:#e4faf3; color:#009f7a; border:1px solid #b5ecd9;
+        border-radius:999px; padding:.24rem .7rem; font-size:.74rem; font-weight:700;
+        margin-right:.4rem;
     }
     .conf-badge {
-        display:inline-block; font-family:'JetBrains Mono', monospace;
-        border-radius:8px; padding:.22rem .62rem; font-size:.72rem; font-weight:600;
-        border:1px solid transparent; margin-right:.4rem;
+        display:inline-block; border-radius:999px; padding:.24rem .7rem; font-size:.74rem;
+        font-weight:700; border:1px solid transparent; margin-right:.4rem;
     }
-    .conf-high    {background:rgba(52,211,153,.12); color:#34d399; border-color:rgba(52,211,153,.42);}
-    .conf-med     {background:rgba(251,146,60,.12); color:#fb923c; border-color:rgba(251,146,60,.42);}
-    .conf-neutral {background:rgba(148,163,184,.10); color:#94a3b8; border-color:rgba(148,163,184,.32);}
+    .conf-high    {background:#e4faf3; color:#009f7a; border-color:#b5ecd9;}
+    .conf-med     {background:#fdf3df; color:#a16207; border-color:#f3e0b0;}
+    .conf-neutral {background:#eef0fa; color:#64748f; border-color:#dfe3f2;}
 
-    .brand-side {font-weight:800; font-size:1.34rem; letter-spacing:-.02em;
-        background:linear-gradient(100deg,#a78bfa,#67e8f9); -webkit-background-clip:text;
-        -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 14px rgba(139,92,246,.55));}
-    .side-sub {color:#7c86a0; font-size:.82rem; margin:.15rem 0 1.2rem;}
+    .brand-side {font-family:'Bricolage Grotesque', 'Figtree', sans-serif;
+        font-weight:700; font-size:1.4rem; letter-spacing:-.02em; color:#233048;}
+    .side-sub {color:#7a8699; font-size:.84rem; margin:.15rem 0 1.2rem;}
 
     /* ── sidebar / tabs / controls ────────────────────────────────────────── */
-    section[data-testid="stSidebar"] {
-        background:rgba(9,9,18,.86); border-right:1px solid rgba(139,92,246,.22);
-        backdrop-filter: blur(16px);
-    }
-    .stTabs [data-baseweb="tab"] {font-weight:600; color:#8b93a7;}
-    .stTabs [aria-selected="true"] {color:#67e8f9 !important;}
-    .stTabs [data-baseweb="tab-highlight"] {background:linear-gradient(90deg,#22d3ee,#8b5cf6) !important;}
+    section[data-testid="stSidebar"] {background:#ffffff; border-right:1px solid #e9ecf7;}
+    .stTabs [data-baseweb="tab"] {font-weight:600; color:#7a8699;}
+    .stTabs [aria-selected="true"] {color:#233048 !important;}
+    .stTabs [data-baseweb="tab-highlight"] {background:#00cf9e !important;}
     .stButton>button {
-        background:rgba(139,92,246,.10); border:1px solid rgba(139,92,246,.35);
-        color:#c4b5fd; border-radius:10px; font-weight:600; transition:all .18s ease;
+        background:#ffffff; border:1px solid #dfe3f2; color:#233048;
+        border-radius:10px; font-weight:600; transition:all .18s ease;
     }
-    .stButton>button:hover {
-        background:rgba(139,92,246,.24); border-color:#8b5cf6; color:#fff;
-        box-shadow:0 0 20px -4px rgba(139,92,246,.75);
+    .stButton>button:hover {background:#e4faf3; border-color:#00cf9e; color:#009f7a;}
+    section[data-testid="stSidebar"] .stButton>button {
+        background:#00cf9e; border-color:#00cf9e; color:#ffffff;
+    }
+    section[data-testid="stSidebar"] .stButton>button:hover {
+        background:#00b78b; border-color:#00b78b; color:#ffffff;
     }
     .stTextInput input, .stTextInput input:focus {
-        background:rgba(13,13,26,.72); border:1px solid rgba(139,92,246,.32); color:#e2e8f0;
+        background:#ffffff; border:1px solid #dfe3f2; color:#233048;
     }
-    .stTextInput input:focus {border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,.16);}
+    .stTextInput input:focus {border-color:#00cf9e; box-shadow:0 0 0 3px rgba(0,207,158,.16);}
     [data-testid="stVerticalBlockBorderWrapper"] {
-        border-color:rgba(139,92,246,.35) !important; border-radius:14px;
-        background:rgba(13,13,26,.55);
+        border-color:#e9ecf7 !important; border-radius:18px; background:#ffffff;
+        box-shadow:0 14px 34px -26px rgba(35,48,72,.25);
     }
     [data-testid="stArrowVegaLiteChart"] {
-        background:rgba(13,13,26,.52); border:1px solid rgba(139,92,246,.16);
-        border-radius:16px; padding:.9rem 0 .5rem;
-        backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-        box-shadow:0 14px 34px -22px rgba(0,0,0,.9);
+        background:#ffffff; border:1px solid #e9ecf7; border-radius:20px;
+        padding:.9rem 0 .5rem; box-shadow:0 14px 34px -26px rgba(35,48,72,.22);
     }
     div[data-testid="stMetric"] {background:transparent;}
     </style>
@@ -189,14 +169,15 @@ st.markdown(
 st.markdown(
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-    '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800'
-    '&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">',
+    '<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800'
+    '&family=Bricolage+Grotesque:wght@400;500;600;700&display=swap" rel="stylesheet">',
     unsafe_allow_html=True,
 )
 st.markdown(
     '<div class="fs-bg" aria-hidden="true">'
-    '<div class="grid"></div><div class="orb o1"></div>'
-    '<div class="orb o2"></div><div class="orb o3"></div></div>',
+    '<div class="wash w1"></div><div class="wash w2"></div>'
+    '<div class="chip c1"></div><div class="chip c2"></div>'
+    '<div class="chip c3"></div><div class="chip c4"></div></div>',
     unsafe_allow_html=True,
 )
 
@@ -256,11 +237,11 @@ with st.sidebar:
     st.markdown("**2 · Engine**")
     if has_llm_key():
         st.markdown('<span class="scope-badge">🟢 LLM connected</span> '
-                    '<span style="font-size:.8rem;color:#7c86a0">answers via GPT</span>',
+                    '<span style="font-size:.8rem;color:#7a8699">answers via GPT</span>',
                     unsafe_allow_html=True)
     else:
         st.markdown('<span class="scope-badge">⚡ Offline mode</span> '
-                    '<span style="font-size:.8rem;color:#7c86a0">deterministic local answers</span>',
+                    '<span style="font-size:.8rem;color:#7a8699">deterministic local answers</span>',
                     unsafe_allow_html=True)
 
     st.divider()
@@ -304,11 +285,11 @@ st.markdown(
 
 if df is None:
     st.markdown(
-        '<div style="text-align:center;padding:3rem 1rem;color:#7c86a0">'
+        '<div style="text-align:center;padding:3rem 1rem;color:#7a8699">'
         '<div style="font-size:3rem">📊</div>'
-        '<h3 style="color:#e8ecf6;font-weight:700;margin:.4rem 0">Load a statement to begin</h3>'
+        '<h3 style="font-weight:700;margin:.4rem 0">Load a statement to begin</h3>'
         '<p style="max-width:440px;margin:0 auto">Use the sidebar to upload your own CSV, '
-        'or click <b style="color:#67e8f9">Load sample statement</b> to explore a demo dataset instantly.</p>'
+        'or click <b style="color:#009f7a">Load sample statement</b> to explore a demo dataset instantly.</p>'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -329,9 +310,8 @@ n_txn = len(df)
 months = sorted(df["date"].dt.to_period("M").unique())
 date_span = f"{df['date'].min():%b %Y} – {df['date'].max():%b %Y}"
 
-st.markdown(f'<div style="color:#7c86a0;font-size:.86rem;margin:-.4rem 0 1rem;'
-            f'font-family:\'JetBrains Mono\',monospace">'
-            f'📄 <b style="color:#c4b5fd">{source_label}</b> · {n_txn} transactions · {date_span}'
+st.markdown(f'<div style="color:#7a8699;font-size:.86rem;margin:-.4rem 0 1rem;">'
+            f'📄 <b style="color:#233048">{source_label}</b> · {n_txn} transactions · {date_span}'
             f'</div>', unsafe_allow_html=True)
 
 
@@ -430,7 +410,7 @@ with dash_tab:
         cat = cat.sort_values("abs_amount", ascending=False)
         donut = (
             alt.Chart(cat)
-            .mark_arc(innerRadius=62, outerRadius=110, stroke="#07070f", strokeWidth=2)
+            .mark_arc(innerRadius=62, outerRadius=110, stroke="#ffffff", strokeWidth=2)
             .encode(
                 theta=alt.Theta("abs_amount:Q"),
                 color=alt.Color("category:N", legend=None,
@@ -440,10 +420,10 @@ with dash_tab:
             .properties(height=320)
         )
         total_lbl = alt.Chart(pd.DataFrame({"t": [total_spend]})).mark_text(
-            text=money(total_spend), fontSize=20, fontWeight=700, color="#e8ecf6", dy=-6
+            text=money(total_spend), fontSize=20, fontWeight=700, color="#233048", dy=-6
         ).properties(height=320)
         sub_lbl = alt.Chart(pd.DataFrame({"t": [total_spend]})).mark_text(
-            text="total spend", fontSize=12, color="#7c86a0", dy=16
+            text="total spend", fontSize=12, color="#7a8699", dy=16
         ).properties(height=320)
         st.altair_chart((donut + total_lbl + sub_lbl).configure(background="transparent"),
                         use_container_width=True)

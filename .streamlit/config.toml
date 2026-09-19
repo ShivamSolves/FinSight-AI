@@ -1,13 +1,14 @@
-# Streamlit theming — dark "techy" base that the custom CSS in app/app.py builds on.
+# Streamlit theming — light wondercraft-style base that the custom CSS in
+# app/app.py builds on: pale periwinkle canvas, white cards, navy ink, mint primary.
 [theme]
-base = "dark"
-primaryColor = "#8b5cf6"
-backgroundColor = "#07070f"
-secondaryBackgroundColor = "#0d0d1a"
-textColor = "#e2e8f0"
-font = "Inter"
-headingFont = "Inter"
-codeFont = "JetBrains Mono"
+base = "light"
+primaryColor = "#00cf9e"
+backgroundColor = "#f5f6fc"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#233048"
+font = "Figtree"
+headingFont = "Bricolage Grotesque"
+codeFont = "Figtree"
 
 [server]
 # Don't phone home with usage stats.
