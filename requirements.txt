@@ -14,8 +14,9 @@ sentence-transformers==3.0.1
 # Vector store
 chromadb==0.5.3
 
-# LLM answer generation (OpenAI client works for GPT-4o-mini)
-openai==1.35.7
+# LLM answer generation
+google-genai>=2.0.0   # Gemini — default provider (free tier, text + vision)
+openai==1.35.7        # optional alternate provider (gpt-4o-mini)
 
 # Environment variable management (.env file support)
 python-dotenv==1.0.1

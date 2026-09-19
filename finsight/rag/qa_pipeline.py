@@ -182,10 +182,11 @@ def _call_llm(system_prompt: str, user_message: str) -> str:
     """
     Send the prompt to the configured LLM and return the response text.
 
-    Currently supports OpenAI (gpt-4o-mini) and Anthropic (claude-haiku).
-    Provider is set in config.py — LLM_PROVIDER and LLM_MODEL.
+    Currently supports Gemini (default), OpenAI (gpt-4o-mini), and Anthropic
+    (claude-haiku). Provider is set in config.py — LLM_PROVIDER and LLM_MODEL.
 
     The API key must be set as an environment variable:
+      Gemini:    $env:GEMINI_API_KEY    = "AIza..."
       OpenAI:    $env:OPENAI_API_KEY    = "sk-..."
       Anthropic: $env:ANTHROPIC_API_KEY = "sk-ant-..."
     Or place in a .env file at the project root (never commit this file).
@@ -199,7 +200,22 @@ def _call_llm(system_prompt: str, user_message: str) -> str:
 
     provider = LLM_PROVIDER.lower().strip()
 
-    if provider == "openai":
+    if provider == "gemini":
+        from google import genai
+        from google.genai import types
+        client = genai.Client()  # reads GEMINI_API_KEY from environment
+        response = client.models.generate_content(
+            model=LLM_MODEL,
+            contents=user_message,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0,       # deterministic — we want math, not creativity
+                max_output_tokens=1024,
+            ),
+        )
+        return (response.text or "").strip()
+
+    elif provider == "openai":
         from openai import OpenAI
         client = OpenAI()  # reads OPENAI_API_KEY from environment
         response = client.chat.completions.create(
@@ -227,7 +243,7 @@ def _call_llm(system_prompt: str, user_message: str) -> str:
     else:
         raise ValueError(
             f"Unknown LLM_PROVIDER '{LLM_PROVIDER}' in config.py. "
-            "Supported: 'openai', 'anthropic'."
+            "Supported: 'gemini', 'openai', 'anthropic'."
         )
 
 

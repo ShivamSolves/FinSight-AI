@@ -26,11 +26,12 @@ CHROMA_DIR     = DATA_DIR / "chroma_db"   # ChromaDB persists here
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"     # ~80 MB, fast, good quality
 
 # ── LLM for answer generation ────────────────────────────────────────────────
-# Supported: "openai" | "anthropic"
-LLM_PROVIDER   = "openai"
-LLM_MODEL      = "gpt-4o-mini"           # cheap, fast, good enough for finance Q&A
-# Set your key in the environment:  $env:OPENAI_API_KEY = "sk-..."
-# or create a .env file (never commit it to git)
+# Supported: "gemini" | "openai" | "anthropic"
+LLM_PROVIDER   = "gemini"
+LLM_MODEL      = "gemini-3.6-flash"      # free tier, fast, strong vision + text
+# Set your key in the environment, e.g.:  export GEMINI_API_KEY="AIza..."
+# or create a .env file (never commit it to git). Each provider reads its own
+# env var: GEMINI_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY.
 
 # ── Categorization ────────────────────────────────────────────────────────────
 CATEGORIES = [
