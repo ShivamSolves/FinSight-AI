@@ -67,22 +67,50 @@ st.markdown(
         color:#233048 !important; letter-spacing:-.02em;
     }
 
-    /* ── pastel wondercraft background ──────────────────────────────────── */
+    /* ── money-themed wondercraft background ────────────────────────────── */
     .fs-bg {position:fixed; inset:0; z-index:-1; overflow:hidden; background:#f5f6fc;}
+    /* faint horizontal ledger ruling across the whole canvas */
+    .fs-bg::before {content:""; position:absolute; inset:0;
+        background:repeating-linear-gradient(to bottom,
+            transparent 0 46px, rgba(35,48,72,.035) 46px 47px);}
     .fs-bg .wash {position:absolute; border-radius:50%; filter:blur(110px);}
     .fs-bg .w1 {width:560px; height:560px; left:-160px; top:-180px; background:#8fe9cb; opacity:.35;
                 animation: fs-float 18s ease-in-out infinite;}
     .fs-bg .w2 {width:520px; height:520px; right:-150px; bottom:-170px; background:#aed7f2; opacity:.40;
                 animation: fs-float 22s ease-in-out infinite reverse;}
-    .fs-bg .chip {position:absolute; border-radius:26px; opacity:.45;
-                  animation: fs-bob 14s ease-in-out infinite;}
-    .fs-bg .c1 {width:120px; height:86px; left:7%;  top:16%; background:#aed7f2; transform:rotate(-8deg);}
-    .fs-bg .c2 {width:96px;  height:70px; left:79%; top:10%; background:#8fe9cb; transform:rotate(7deg);
-                animation-delay:-4s;}
-    .fs-bg .c3 {width:110px; height:78px; left:66%; top:64%; background:#f3cbe7; transform:rotate(-6deg);
-                animation-delay:-8s;}
-    .fs-bg .c4 {width:84px;  height:62px; left:15%; top:72%; background:#bcc7f6; transform:rotate(9deg);
-                animation-delay:-11s;}
+    /* large outlined currency glyphs drifting behind the content */
+    .fs-bg .glyph {position:absolute; font-family:'Bricolage Grotesque','Figtree',sans-serif;
+                   font-weight:800; line-height:1; user-select:none; pointer-events:none;
+                   color:rgba(0,207,158,.07); -webkit-text-stroke:1.5px rgba(0,207,158,.16);
+                   animation: fs-bob 16s ease-in-out infinite;}
+    .fs-bg .g1 {font-size:12rem; left:3%;  top:10%;}
+    .fs-bg .g2 {font-size:8rem;  left:83%; top:6%;  color:rgba(47,116,148,.07);
+                -webkit-text-stroke-color:rgba(47,116,148,.16); animation-delay:-5s;}
+    .fs-bg .g3 {font-size:9rem;  left:70%; top:64%; color:rgba(102,114,216,.06);
+                -webkit-text-stroke-color:rgba(102,114,216,.14); animation-delay:-9s;}
+    .fs-bg .g4 {font-size:7rem;  left:10%; top:76%; color:rgba(0,207,158,.06);
+                -webkit-text-stroke-color:rgba(0,207,158,.14); animation-delay:-12s;}
+    /* coins */
+    .fs-bg .coin {position:absolute; border-radius:50%; display:flex; align-items:center;
+                  justify-content:center; font-family:'Bricolage Grotesque',sans-serif; font-weight:800;
+                  background:radial-gradient(circle at 32% 30%, #ffffff, #d9f6ec 60%, #b9ecdc);
+                  border:2px solid rgba(0,207,158,.35); color:rgba(0,159,122,.55);
+                  box-shadow: inset 0 0 0 6px rgba(255,255,255,.55);
+                  animation: fs-bob 12s ease-in-out infinite;}
+    .fs-bg .k1 {width:74px; height:74px; left:24%; top:20%; font-size:2rem;}
+    .fs-bg .k2 {width:56px; height:56px; left:88%; top:42%; font-size:1.5rem; animation-delay:-4s;}
+    .fs-bg .k3 {width:64px; height:64px; left:52%; top:84%; font-size:1.7rem; animation-delay:-8s;}
+    /* banknotes */
+    .fs-bg .note {position:absolute; border-radius:12px; opacity:.5;
+                  background:linear-gradient(135deg,#eaf7ff,#dcefff);
+                  border:1.5px solid rgba(47,116,148,.25);
+                  box-shadow: inset 0 0 0 5px rgba(255,255,255,.6);
+                  animation: fs-bob 15s ease-in-out infinite;}
+    .fs-bg .note::after {content:""; position:absolute; left:50%; top:50%; width:34%; height:54%;
+                  transform:translate(-50%,-50%); border-radius:50%;
+                  border:1.5px solid rgba(47,116,148,.30);}
+    .fs-bg .n1 {width:132px; height:70px; left:5%;  top:44%; transform:rotate(-7deg);}
+    .fs-bg .n2 {width:110px; height:60px; left:76%; top:78%; transform:rotate(6deg); animation-delay:-6s;}
     @keyframes fs-float {0%,100% {transform:translate(0,0);} 50% {transform:translate(40px,-30px);}}
     @keyframes fs-bob  {0%,100% {margin-top:0;} 50% {margin-top:-22px;}}
 
@@ -180,8 +208,10 @@ st.markdown(
 st.markdown(
     '<div class="fs-bg" aria-hidden="true">'
     '<div class="wash w1"></div><div class="wash w2"></div>'
-    '<div class="chip c1"></div><div class="chip c2"></div>'
-    '<div class="chip c3"></div><div class="chip c4"></div></div>',
+    '<span class="glyph g1">₹</span><span class="glyph g2">$</span>'
+    '<span class="glyph g3">€</span><span class="glyph g4">₹</span>'
+    '<span class="coin k1">₹</span><span class="coin k2">$</span><span class="coin k3">₹</span>'
+    '<div class="note n1"></div><div class="note n2"></div></div>',
     unsafe_allow_html=True,
 )
 
