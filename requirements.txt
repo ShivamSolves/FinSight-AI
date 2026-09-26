@@ -1,9 +1,6 @@
 # FinSight AI — Phase 1 dependencies
 # Pin minor versions so the project is reproducible on any machine.
 
-# Install the local finsight package so Streamlit Cloud can find it
--e .
-
 # Data handling
 pandas==2.2.2
 python-dateutil==2.9.0

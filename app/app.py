@@ -16,7 +16,16 @@ Flow
 from __future__ import annotations
 
 import os
+import sys
 import tempfile
+from pathlib import Path
+
+# ── Make project root importable on Streamlit Cloud ───────────────────────────
+# Streamlit Cloud runs this file from /mount/src/finsight-ai/app/app.py,
+# so the project root is not on sys.path by default. This block fixes that.
+_ROOT = Path(__file__).parent.parent   # …/finsight-ai/
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
 import altair as alt
 import pandas as pd
