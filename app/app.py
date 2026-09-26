@@ -246,16 +246,7 @@ with st.sidebar:
     st.markdown('<div class="side-sub">Grounded answers over your bank statement</div>',
                 unsafe_allow_html=True)
 
-    st.markdown("**1 · Data source**")
-    uploaded = st.file_uploader("Upload a statement (CSV or PDF)", type=["csv", "pdf"],
-                                label_visibility="collapsed")
-    sample_path = RAW_DIR / "bank_statement.csv"
-    if st.button("✨ Load sample statement", use_container_width=True,
-                 disabled=not sample_path.exists()):
-        st.session_state["use_sample"] = True
-
-    st.divider()
-    st.markdown("**2 · Add a payment screenshot**")
+    st.markdown("**1 · Add a payment screenshot**")
     shots = st.file_uploader(
         "UPI / bank payment screenshot (Gemini reads amount, payee, UTR)",
         type=["png", "jpg", "jpeg", "webp"],
@@ -269,6 +260,15 @@ with st.sidebar:
             shot_frames.append(_extract_screenshot(shot.name, shot.getvalue()))
         except ScreenshotExtractionError as exc:
             st.warning(f"**{shot.name}**: {exc}")
+
+    st.divider()
+    st.markdown("**2 · Data source**")
+    uploaded = st.file_uploader("Upload a statement (CSV or PDF)", type=["csv", "pdf"],
+                                label_visibility="collapsed")
+    sample_path = RAW_DIR / "bank_statement.csv"
+    if st.button("✨ Load sample statement", use_container_width=True,
+                 disabled=not sample_path.exists()):
+        st.session_state["use_sample"] = True
 
     st.divider()
     st.markdown("**3 · Engine**")
