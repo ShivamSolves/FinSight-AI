@@ -114,12 +114,16 @@ st.markdown(
     @keyframes fs-float {0%,100% {transform:translate(0,0);} 50% {transform:translate(40px,-30px);}}
     @keyframes fs-bob  {0%,100% {margin-top:0;} 50% {margin-top:-22px;}}
 
-    /* ── hero ─────────────────────────────────────────────────────────────── */
+    /* ── hero (Apple frosted glass) ───────────────────────────────────────── */
     .hero {
         position:relative; overflow:hidden; border-radius:26px;
         padding:2.4rem 2.6rem; margin-bottom:1.5rem;
-        background:#ffffff; border:1px solid #e9ecf7;
-        box-shadow:0 24px 60px -30px rgba(35,48,72,.25);
+        background:rgba(255,255,255,.55);
+        -webkit-backdrop-filter:blur(24px) saturate(180%);
+        backdrop-filter:blur(24px) saturate(180%);
+        border:1px solid rgba(255,255,255,.65);
+        box-shadow:0 24px 60px -30px rgba(35,48,72,.25),
+                   inset 0 1px 0 rgba(255,255,255,.6);
     }
     .hero::after {
         content:""; position:absolute; top:0; left:0; right:0; height:4px;
@@ -135,11 +139,16 @@ st.markdown(
         margin-bottom:.9rem;
     }
 
-    /* ── KPI cards ────────────────────────────────────────────────────────── */
+    /* ── KPI cards (frosted glass) ────────────────────────────────────────── */
     .kpi {
-        height:100%; background:#ffffff; border:1px solid #e9ecf7;
+        height:100%;
+        background:rgba(255,255,255,.55);
+        -webkit-backdrop-filter:blur(24px) saturate(180%);
+        backdrop-filter:blur(24px) saturate(180%);
+        border:1px solid rgba(255,255,255,.65);
         border-radius:20px; padding:1.2rem 1.35rem;
-        box-shadow:0 14px 34px -24px rgba(35,48,72,.28);
+        box-shadow:0 14px 34px -24px rgba(35,48,72,.28),
+                   inset 0 1px 0 rgba(255,255,255,.6);
     }
     .kpi .label {color:#7a8699; font-size:.72rem; font-weight:700;
                  text-transform:uppercase; letter-spacing:.12em;}
@@ -165,33 +174,50 @@ st.markdown(
         font-weight:700; font-size:1.4rem; letter-spacing:-.02em; color:#233048;}
     .side-sub {color:#7a8699; font-size:.84rem; margin:.15rem 0 1.2rem;}
 
-    /* ── sidebar / tabs / controls ────────────────────────────────────────── */
-    section[data-testid="stSidebar"] {background:#ffffff; border-right:1px solid #e9ecf7;}
+    /* ── sidebar / tabs / controls (frosted glass) ────────────────────────── */
+    section[data-testid="stSidebar"] {
+        background:rgba(255,255,255,.6);
+        -webkit-backdrop-filter:blur(24px) saturate(180%);
+        backdrop-filter:blur(24px) saturate(180%);
+        border-right:1px solid rgba(255,255,255,.65);
+    }
     .stTabs [data-baseweb="tab"] {font-weight:600; color:#7a8699;}
     .stTabs [aria-selected="true"] {color:#233048 !important;}
     .stTabs [data-baseweb="tab-highlight"] {background:#00cf9e !important;}
     .stButton>button {
-        background:#ffffff; border:1px solid #dfe3f2; color:#233048;
+        background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.8); color:#233048;
         border-radius:10px; font-weight:600; transition:all .18s ease;
+        -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
     }
     .stButton>button:hover {background:#e4faf3; border-color:#00cf9e; color:#009f7a;}
     section[data-testid="stSidebar"] .stButton>button {
         background:#00cf9e; border-color:#00cf9e; color:#ffffff;
+        -webkit-backdrop-filter:none; backdrop-filter:none;
     }
     section[data-testid="stSidebar"] .stButton>button:hover {
         background:#00b78b; border-color:#00b78b; color:#ffffff;
     }
     .stTextInput input, .stTextInput input:focus {
-        background:#ffffff; border:1px solid #dfe3f2; color:#233048;
+        background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.8); color:#233048;
+        -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
     }
     .stTextInput input:focus {border-color:#00cf9e; box-shadow:0 0 0 3px rgba(0,207,158,.16);}
     [data-testid="stVerticalBlockBorderWrapper"] {
-        border-color:#e9ecf7 !important; border-radius:18px; background:#ffffff;
-        box-shadow:0 14px 34px -26px rgba(35,48,72,.25);
+        border-color:rgba(255,255,255,.65) !important; border-radius:18px;
+        background:rgba(255,255,255,.5);
+        -webkit-backdrop-filter:blur(24px) saturate(180%);
+        backdrop-filter:blur(24px) saturate(180%);
+        box-shadow:0 14px 34px -26px rgba(35,48,72,.25),
+                   inset 0 1px 0 rgba(255,255,255,.6);
     }
     [data-testid="stArrowVegaLiteChart"] {
-        background:#ffffff; border:1px solid #e9ecf7; border-radius:20px;
-        padding:.9rem 0 .5rem; box-shadow:0 14px 34px -26px rgba(35,48,72,.22);
+        background:rgba(255,255,255,.5);
+        -webkit-backdrop-filter:blur(24px) saturate(180%);
+        backdrop-filter:blur(24px) saturate(180%);
+        border:1px solid rgba(255,255,255,.65); border-radius:20px;
+        padding:.9rem 0 .5rem;
+        box-shadow:0 14px 34px -26px rgba(35,48,72,.22),
+                   inset 0 1px 0 rgba(255,255,255,.6);
     }
     div[data-testid="stMetric"] {background:transparent;}
     </style>
