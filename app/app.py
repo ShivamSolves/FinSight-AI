@@ -45,8 +45,6 @@ from finsight.rag.local_answer import summarize_hits
 from finsight.rag.qa_pipeline import ask, retrieve
 
 # ── Palette ──────────────────────────────────────────────────────────────────
-# Wondercraft-inspired: mint primary, teal-blue secondary, pastel chips on a
-# pale periwinkle canvas with navy ink.
 INDIGO, VIOLET, FUCHSIA = "#2f7494", "#6672d8", "#f3a9d3"
 GREEN, ROSE, SLATE = "#009f7a", "#e0567a", "#64748f"
 CATEGORY_COLORS = [
@@ -62,9 +60,6 @@ st.set_page_config(
 )
 
 # ── Styling ────────────────────────────────────────────────────────────────────
-# The <style> tag must be the FIRST token of its own markdown call: markdown-it
-# only treats <style> as a raw HTML block when it opens a line, otherwise the
-# CSS leaks onto the page as visible text.
 st.markdown(
     """<style>
     html, body, [class*="css"] { font-family: 'Figtree', -apple-system, 'Segoe UI', sans-serif; }
@@ -78,7 +73,6 @@ st.markdown(
 
     /* ── money-themed wondercraft background ────────────────────────────── */
     .fs-bg {position:fixed; inset:0; z-index:-1; overflow:hidden; background:#f5f6fc;}
-    /* faint horizontal ledger ruling across the whole canvas */
     .fs-bg::before {content:""; position:absolute; inset:0;
         background:repeating-linear-gradient(to bottom,
             transparent 0 46px, rgba(35,48,72,.035) 46px 47px);}
@@ -87,7 +81,6 @@ st.markdown(
                 animation: fs-float 18s ease-in-out infinite;}
     .fs-bg .w2 {width:520px; height:520px; right:-150px; bottom:-170px; background:#aed7f2; opacity:.40;
                 animation: fs-float 22s ease-in-out infinite reverse;}
-    /* large outlined currency glyphs drifting behind the content */
     .fs-bg .glyph {position:absolute; font-family:'Bricolage Grotesque','Figtree',sans-serif;
                    font-weight:800; line-height:1; user-select:none; pointer-events:none;
                    color:rgba(0,207,158,.07); -webkit-text-stroke:1.5px rgba(0,207,158,.16);
@@ -99,7 +92,6 @@ st.markdown(
                 -webkit-text-stroke-color:rgba(102,114,216,.14); animation-delay:-9s;}
     .fs-bg .g4 {font-size:7rem;  left:10%; top:76%; color:rgba(0,207,158,.06);
                 -webkit-text-stroke-color:rgba(0,207,158,.14); animation-delay:-12s;}
-    /* coins */
     .fs-bg .coin {position:absolute; border-radius:50%; display:flex; align-items:center;
                   justify-content:center; font-family:'Bricolage Grotesque',sans-serif; font-weight:800;
                   background:radial-gradient(circle at 32% 30%, #ffffff, #d9f6ec 60%, #b9ecdc);
@@ -109,7 +101,6 @@ st.markdown(
     .fs-bg .k1 {width:74px; height:74px; left:24%; top:20%; font-size:2rem;}
     .fs-bg .k2 {width:56px; height:56px; left:88%; top:42%; font-size:1.5rem; animation-delay:-4s;}
     .fs-bg .k3 {width:64px; height:64px; left:52%; top:84%; font-size:1.7rem; animation-delay:-8s;}
-    /* banknotes */
     .fs-bg .note {position:absolute; border-radius:12px; opacity:.5;
                   background:linear-gradient(135deg,#eaf7ff,#dcefff);
                   border:1.5px solid rgba(47,116,148,.25);
@@ -123,7 +114,7 @@ st.markdown(
     @keyframes fs-float {0%,100% {transform:translate(0,0);} 50% {transform:translate(40px,-30px);}}
     @keyframes fs-bob  {0%,100% {margin-top:0;} 50% {margin-top:-22px;}}
 
-    /* ── hero (Apple frosted glass) ───────────────────────────────────────── */
+    /* ── hero ── */
     .hero {
         position:relative; overflow:hidden; border-radius:26px;
         padding:2.4rem 2.6rem; margin-bottom:1.5rem;
@@ -148,7 +139,7 @@ st.markdown(
         margin-bottom:.9rem;
     }
 
-    /* ── KPI cards (frosted glass) ────────────────────────────────────────── */
+    /* ── KPI cards ── */
     .kpi {
         height:100%;
         background:rgba(255,255,255,.55);
@@ -165,7 +156,7 @@ st.markdown(
                  font-size:1.72rem; font-weight:700; margin-top:.35rem; letter-spacing:-.02em;}
     .kpi .sub   {font-size:.78rem; color:#7a8699; margin-top:.2rem;}
 
-    /* ── badges ───────────────────────────────────────────────────────────── */
+    /* ── badges ── */
     .scope-badge {
         display:inline-block; background:#e4faf3; color:#009f7a; border:1px solid #b5ecd9;
         border-radius:999px; padding:.24rem .7rem; font-size:.74rem; font-weight:700;
@@ -183,21 +174,20 @@ st.markdown(
         font-weight:700; font-size:1.5rem; letter-spacing:-.02em; color:#233048;}
     .side-sub {color:#7a8699; font-size:.86rem; margin:.2rem 0 0;}
 
-    /* ── main-screen control deck ─────────────────────────────────────────── */
     .deck-head {
         display:flex; justify-content:space-between; align-items:flex-start;
         gap:1rem; flex-wrap:wrap; margin-bottom:1.1rem;
     }
     .deck-engine {text-align:right; flex-shrink:0;}
 
-    /* ── sidebar removed — hide shell + collapse toggle, reclaim its space ── */
+    /* ── hide sidebar ── */
     section[data-testid="stSidebar"] {display:none;}
     [data-testid="collapsedControl"],
     button[data-testid="stSidebarCollapsedControl"] {display:none;}
     [data-testid="stAppViewContainer"],
     [data-testid="stMain"] {margin-left:0 !important;}
 
-    /* ── tabs / controls (frosted glass) ──────────────────────────────────── */
+    /* ── tabs / controls ── */
     .stTabs [data-baseweb="tab"] {font-weight:600; color:#7a8699;}
     .stTabs [aria-selected="true"] {color:#233048 !important;}
     .stTabs [data-baseweb="tab-highlight"] {background:#00cf9e !important;}
@@ -275,13 +265,11 @@ _SHOT_MIME = {
 
 @st.cache_data(show_spinner="Reading payment screenshot…")
 def _extract_screenshot(name: str, data: bytes) -> pd.DataFrame:
-    """Cached so a Streamlit rerun never re-calls Gemini for the same image."""
     ext = name.rsplit(".", 1)[-1].lower() if "." in name else "png"
     return extract_transactions_from_image(data, _SHOT_MIME.get(ext, "image/png"))
 
 
 def ensure_store(df: pd.DataFrame) -> None:
-    """Build the vector store once per distinct dataset (embeddings are costly)."""
     sig = f"{len(df)}_{df['amount'].sum():.2f}_{df['date'].min()}_{df['date'].max()}"
     if st.session_state.get("store_sig") != sig:
         with st.spinner("Embedding transactions into the vector store…"):
@@ -319,7 +307,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Control deck (data inputs on the main screen, not a sidebar) ───────────────
+# ── Control deck ───────────────────────────────────────────────────────────────
 _engine_html = (
     '<span class="scope-badge">🟢 LLM connected</span> '
     '<span style="font-size:.8rem;color:#7a8699">answers via Gemini</span>'
@@ -342,7 +330,7 @@ with st.container(border=True):
     with col_shot:
         st.markdown("**1 · Add a payment screenshot**")
         shots = st.file_uploader(
-            "UPI / bank payment screenshot (Gemini reads amount, payee, UTR)",
+            "UPI / bank payment screenshot",
             type=["png", "jpg", "jpeg", "webp"],
             accept_multiple_files=True,
             label_visibility="collapsed",
@@ -364,10 +352,9 @@ with st.container(border=True):
                      disabled=not sample_path.exists()):
             st.session_state["use_sample"] = True
 
-    st.caption("Retrieval is exact — aggregate questions fetch the complete "
-               "matching set, not a top-K sample.")
+    st.caption("Retrieval is exact — aggregate questions fetch the complete matching set.")
 
-# ── Resolve the active dataframe ───────────────────────────────────────────────
+# ── Resolve active DataFrame ──────────────────────────────────────────────────
 df = None
 if uploaded is not None:
     st.session_state["use_sample"] = False
@@ -377,11 +364,8 @@ if uploaded is not None:
     except Exception as exc:
         source_label = None
         st.error(
-            f"Couldn't read **{uploaded.name}** as a bank statement.\n\n"
-            f"{exc}\n\n"
-            "Expected columns: a date, a description/merchant, and an amount "
-            "(or separate debit/credit columns). Remove the file above "
-            "or load the sample instead."
+            f"Couldn't read **{uploaded.name}** as a bank statement.\n\n{exc}\n\n"
+            "Expected columns: a date, a description/merchant, and an amount."
         )
 elif st.session_state.get("use_sample") and sample_path.exists():
     df = _load_sample(str(sample_path))
@@ -389,7 +373,6 @@ elif st.session_state.get("use_sample") and sample_path.exists():
 else:
     source_label = None
 
-# ── Merge any transactions read from payment screenshots ───────────────────────
 shot_df = None
 if shot_frames:
     shot_df = categorize_dataframe(pd.concat(shot_frames, ignore_index=True))
@@ -399,8 +382,8 @@ if shot_frames:
                     else f"{n} screenshot txn") + ("s" if n != 1 else "")
 
 if shot_df is not None and not shot_df.empty:
-    with st.expander(f"📸 Read from your screenshot{'s' if len(shot_df) != 1 else ''} "
-                     f"({len(shot_df)} payment{'s' if len(shot_df) != 1 else ''})", expanded=True):
+    with st.expander(f"📸 Read from screenshot ({len(shot_df)} payment{'s' if len(shot_df)!=1 else ''})",
+                     expanded=True):
         preview = shot_df[["date", "description", "amount", "category"]].copy()
         preview["date"] = preview["date"].dt.strftime("%d %b %Y")
         preview["amount"] = preview["amount"].map(lambda x: f"{S}{abs(x):,.2f} out")
@@ -411,14 +394,13 @@ if df is None:
         '<div style="text-align:center;padding:3rem 1rem;color:#7a8699">'
         '<div style="font-size:3rem">📊</div>'
         '<h3 style="font-weight:700;margin:.4rem 0">Load a statement to begin</h3>'
-        '<p style="max-width:440px;margin:0 auto">Use the panel above to upload your own CSV, '
-        'or click <b style="color:#009f7a">Load sample statement</b> to explore a demo dataset instantly.</p>'
+        '<p style="max-width:440px;margin:0 auto">Upload your own CSV or click '
+        '<b style="color:#009f7a">Load sample statement</b> to explore instantly.</p>'
         '</div>',
         unsafe_allow_html=True,
     )
     st.stop()
 
-# Store ready — safe to query.
 ensure_store(df)
 
 # ── Derived numbers ────────────────────────────────────────────────────────────
@@ -426,12 +408,12 @@ spend_df = df[df["amount"] < 0].copy()
 spend_df["abs_amount"] = spend_df["amount"].abs()
 income_df = df[df["amount"] > 0].copy()
 
-total_spend = float(spend_df["abs_amount"].sum())
+total_spend  = float(spend_df["abs_amount"].sum())
 total_income = float(income_df["amount"].sum())
-net = total_income - total_spend
-n_txn = len(df)
-months = sorted(df["date"].dt.to_period("M").unique())
-date_span = f"{df['date'].min():%b %Y} – {df['date'].max():%b %Y}"
+net          = total_income - total_spend
+n_txn        = len(df)
+months       = sorted(df["date"].dt.to_period("M").unique())
+date_span    = f"{df['date'].min():%b %Y} – {df['date'].max():%b %Y}"
 
 st.markdown(f'<div style="color:#7a8699;font-size:.86rem;margin:-.4rem 0 1rem;">'
             f'📄 <b style="color:#233048">{source_label}</b> · {n_txn} transactions · {date_span}'
@@ -445,10 +427,10 @@ def kpi(label, value, sub, color):
 
 
 c1, c2, c3, c4 = st.columns(4)
-c1.markdown(kpi("Income", money(total_income), f"{len(income_df)} credits", GREEN), unsafe_allow_html=True)
-c2.markdown(kpi("Spending", money(total_spend), f"{len(spend_df)} debits", ROSE), unsafe_allow_html=True)
-c3.markdown(kpi("Net", money(net), "income − spending", INDIGO if net >= 0 else ROSE), unsafe_allow_html=True)
-c4.markdown(kpi("Avg / month", money(total_spend / max(len(months), 1)),
+c1.markdown(kpi("Income",     money(total_income), f"{len(income_df)} credits", GREEN),  unsafe_allow_html=True)
+c2.markdown(kpi("Spending",   money(total_spend),  f"{len(spend_df)} debits",   ROSE),   unsafe_allow_html=True)
+c3.markdown(kpi("Net",        money(net),          "income − spending",         INDIGO if net >= 0 else ROSE), unsafe_allow_html=True)
+c4.markdown(kpi("Avg / month",money(total_spend / max(len(months), 1)),
                 f"over {len(months)} month{'s' if len(months)!=1 else ''}", VIOLET), unsafe_allow_html=True)
 
 st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
@@ -502,7 +484,7 @@ with ask_tab:
                 with st.spinner("Asking the model…"):
                     result = ask(question)
                 if result.error:
-                    st.warning(f"LLM unavailable ({result.error}) — showing the computed answer.")
+                    st.warning(f"LLM unavailable ({result.error}) — showing computed answer.")
                     answer_md = local.to_markdown(question)
                 else:
                     answer_md = result.answer
@@ -513,14 +495,12 @@ with ask_tab:
                 st.markdown(answer_md)
 
             with st.expander(f"🧾 Evidence — the {local.count} transactions used"):
-                ev = pd.DataFrame([
-                    {
-                        "Date": h["metadata"]["date"],
-                        "Description": h["metadata"]["description"],
-                        "Category": h["metadata"]["category"],
-                        "Amount": h["metadata"]["amount"],
-                    } for h in local.evidence
-                ])
+                ev = pd.DataFrame([{
+                    "Date":        h["metadata"]["date"],
+                    "Description": h["metadata"]["description"],
+                    "Category":    h["metadata"]["category"],
+                    "Amount":      h["metadata"]["amount"],
+                } for h in local.evidence])
                 st.dataframe(ev, use_container_width=True, hide_index=True)
 
 # ·· DASHBOARD ··
@@ -566,7 +546,7 @@ with dash_tab:
         monthly = tmp.groupby("month").apply(
             lambda g: pd.Series({
                 "Spending": g["signed_spend"].sum(),
-                "Income": g["amount"].clip(lower=0).sum(),
+                "Income":   g["amount"].clip(lower=0).sum(),
             }), include_groups=False
         ).reset_index()
         long = monthly.melt("month", var_name="Flow", value_name="Amount")
@@ -586,16 +566,14 @@ with dash_tab:
         st.altair_chart(trend, use_container_width=True)
         monthly["net"] = monthly["Income"] - monthly["Spending"]
         peak_spend_month = monthly.loc[monthly["Spending"].idxmax(), "month"]
-        best_save_month = monthly.loc[monthly["net"].idxmax(), "month"]
+        best_save_month  = monthly.loc[monthly["net"].idxmax(), "month"]
         ml, mr = st.columns(2)
         ml.markdown(f'<div class="kpi"><div class="label">Peak spend month</div>'
                     f'<div class="value" style="font-size:1.2rem;color:{ROSE}">'
-                    f'{peak_spend_month:%b %Y}</div></div>',
-                    unsafe_allow_html=True)
+                    f'{peak_spend_month:%b %Y}</div></div>', unsafe_allow_html=True)
         mr.markdown(f'<div class="kpi"><div class="label">Best saving month</div>'
                     f'<div class="value" style="font-size:1.2rem;color:{GREEN}">'
-                    f'{best_save_month:%b %Y}</div></div>',
-                    unsafe_allow_html=True)
+                    f'{best_save_month:%b %Y}</div></div>', unsafe_allow_html=True)
 
     st.markdown("##### Top merchants")
     merch = spend_df.groupby("description")["abs_amount"].sum().reset_index()
@@ -634,16 +612,16 @@ with txn_tab:
 
     st.caption(f"Showing {len(view)} of {n_txn} transactions")
     display = pd.DataFrame({
-        "Date": view["date"].dt.strftime("%Y-%m-%d"),
+        "Date":        view["date"].dt.strftime("%Y-%m-%d"),
         "Description": view["description"],
-        "Category": view["category"],
-        "Type": view["transaction_type"],
-        "Amount": view["amount"].map(lambda x: f"{S}{x:,.2f}"),
+        "Category":    view["category"],
+        "Type":        view["transaction_type"],
+        "Amount":      view["amount"].map(lambda x: f"{S}{x:,.2f}"),
     })
     st.dataframe(
         display, use_container_width=True, hide_index=True, height=520,
         column_config={
             "Category": st.column_config.TextColumn("Category", width="medium"),
-            "Amount": st.column_config.TextColumn("Amount", width="small"),
+            "Amount":   st.column_config.TextColumn("Amount",   width="small"),
         },
     )
