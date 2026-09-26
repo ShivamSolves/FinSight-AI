@@ -303,8 +303,8 @@ st.markdown(
     <div class="hero">
       <span class="tag">Personal Finance · RAG</span>
       <h1>Ask your money anything.</h1>
-      <p>FinSight reads a messy bank statement, categorizes every transaction,
-         and answers questions with grounded, auditable totals — no hallucinated numbers.</p>
+      <p>FinSight AI reads payment screenshots and bank statements to categorize every transaction,
+         visualizes them, and provides answers to questions with grounded, auditable totals — no hallucinated numbers.</p>
     </div>
     """,
     unsafe_allow_html=True,
