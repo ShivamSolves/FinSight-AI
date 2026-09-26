@@ -49,7 +49,7 @@ st.set_page_config(
     page_title="FinSight AI",
     page_icon="◈",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ── Styling ────────────────────────────────────────────────────────────────────
@@ -171,16 +171,24 @@ st.markdown(
     .conf-neutral {background:#eef0fa; color:#64748f; border-color:#dfe3f2;}
 
     .brand-side {font-family:'Bricolage Grotesque', 'Figtree', sans-serif;
-        font-weight:700; font-size:1.4rem; letter-spacing:-.02em; color:#233048;}
-    .side-sub {color:#7a8699; font-size:.84rem; margin:.15rem 0 1.2rem;}
+        font-weight:700; font-size:1.5rem; letter-spacing:-.02em; color:#233048;}
+    .side-sub {color:#7a8699; font-size:.86rem; margin:.2rem 0 0;}
 
-    /* ── sidebar / tabs / controls (frosted glass) ────────────────────────── */
-    section[data-testid="stSidebar"] {
-        background:rgba(255,255,255,.6);
-        -webkit-backdrop-filter:blur(24px) saturate(180%);
-        backdrop-filter:blur(24px) saturate(180%);
-        border-right:1px solid rgba(255,255,255,.65);
+    /* ── main-screen control deck ─────────────────────────────────────────── */
+    .deck-head {
+        display:flex; justify-content:space-between; align-items:flex-start;
+        gap:1rem; flex-wrap:wrap; margin-bottom:1.1rem;
     }
+    .deck-engine {text-align:right; flex-shrink:0;}
+
+    /* ── sidebar removed — hide shell + collapse toggle, reclaim its space ── */
+    section[data-testid="stSidebar"] {display:none;}
+    [data-testid="collapsedControl"],
+    button[data-testid="stSidebarCollapsedControl"] {display:none;}
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {margin-left:0 !important;}
+
+    /* ── tabs / controls (frosted glass) ──────────────────────────────────── */
     .stTabs [data-baseweb="tab"] {font-weight:600; color:#7a8699;}
     .stTabs [aria-selected="true"] {color:#233048 !important;}
     .stTabs [data-baseweb="tab-highlight"] {background:#00cf9e !important;}
@@ -190,13 +198,6 @@ st.markdown(
         -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
     }
     .stButton>button:hover {background:#e4faf3; border-color:#00cf9e; color:#009f7a;}
-    section[data-testid="stSidebar"] .stButton>button {
-        background:#00cf9e; border-color:#00cf9e; color:#ffffff;
-        -webkit-backdrop-filter:none; backdrop-filter:none;
-    }
-    section[data-testid="stSidebar"] .stButton>button:hover {
-        background:#00b78b; border-color:#00b78b; color:#ffffff;
-    }
     .stTextInput input, .stTextInput input:focus {
         background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.8); color:#233048;
         -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
@@ -296,48 +297,64 @@ def money(x: float) -> str:
     return f"{S}{x:,.0f}"
 
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown('<div class="brand-side">◈ FinSight AI</div>', unsafe_allow_html=True)
-    st.markdown('<div class="side-sub">Grounded answers over your bank statement</div>',
-                unsafe_allow_html=True)
+# ── Hero ───────────────────────────────────────────────────────────────────────
+st.markdown(
+    """
+    <div class="hero">
+      <span class="tag">Personal Finance · RAG</span>
+      <h1>Ask your money anything.</h1>
+      <p>FinSight reads a messy bank statement, categorizes every transaction,
+         and answers questions with grounded, auditable totals — no hallucinated numbers.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-    st.markdown("**1 · Add a payment screenshot**")
-    shots = st.file_uploader(
-        "UPI / bank payment screenshot (Gemini reads amount, payee, UTR)",
-        type=["png", "jpg", "jpeg", "webp"],
-        accept_multiple_files=True,
-        label_visibility="collapsed",
-        key="shot_uploader",
+# ── Control deck (data inputs on the main screen, not a sidebar) ───────────────
+_engine_html = (
+    '<span class="scope-badge">🟢 LLM connected</span> '
+    '<span style="font-size:.8rem;color:#7a8699">answers via Gemini</span>'
+    if has_llm_key() else
+    '<span class="scope-badge">⚡ Offline mode</span> '
+    '<span style="font-size:.8rem;color:#7a8699">deterministic local answers</span>'
+)
+
+with st.container(border=True):
+    st.markdown(
+        '<div class="deck-head">'
+        '<div><div class="brand-side">◈ FinSight AI</div>'
+        '<div class="side-sub" style="margin:0">Grounded answers over your bank statement</div></div>'
+        f'<div class="deck-engine">{_engine_html}</div>'
+        '</div>',
+        unsafe_allow_html=True,
     )
-    shot_frames: list[pd.DataFrame] = []
-    for shot in shots or []:
-        try:
-            shot_frames.append(_extract_screenshot(shot.name, shot.getvalue()))
-        except ScreenshotExtractionError as exc:
-            st.warning(f"**{shot.name}**: {exc}")
+    col_shot, col_data = st.columns(2, gap="medium")
 
-    st.divider()
-    st.markdown("**2 · Data source**")
-    uploaded = st.file_uploader("Upload a statement (CSV or PDF)", type=["csv", "pdf"],
-                                label_visibility="collapsed")
-    sample_path = RAW_DIR / "bank_statement.csv"
-    if st.button("✨ Load sample statement", use_container_width=True,
-                 disabled=not sample_path.exists()):
-        st.session_state["use_sample"] = True
+    with col_shot:
+        st.markdown("**1 · Add a payment screenshot**")
+        shots = st.file_uploader(
+            "UPI / bank payment screenshot (Gemini reads amount, payee, UTR)",
+            type=["png", "jpg", "jpeg", "webp"],
+            accept_multiple_files=True,
+            label_visibility="collapsed",
+            key="shot_uploader",
+        )
+        shot_frames: list[pd.DataFrame] = []
+        for shot in shots or []:
+            try:
+                shot_frames.append(_extract_screenshot(shot.name, shot.getvalue()))
+            except ScreenshotExtractionError as exc:
+                st.warning(f"**{shot.name}**: {exc}")
 
-    st.divider()
-    st.markdown("**3 · Engine**")
-    if has_llm_key():
-        st.markdown('<span class="scope-badge">🟢 LLM connected</span> '
-                    '<span style="font-size:.8rem;color:#7a8699">answers via Gemini</span>',
-                    unsafe_allow_html=True)
-    else:
-        st.markdown('<span class="scope-badge">⚡ Offline mode</span> '
-                    '<span style="font-size:.8rem;color:#7a8699">deterministic local answers</span>',
-                    unsafe_allow_html=True)
+    with col_data:
+        st.markdown("**2 · Data source**")
+        uploaded = st.file_uploader("Upload a statement (CSV or PDF)", type=["csv", "pdf"],
+                                    label_visibility="collapsed")
+        sample_path = RAW_DIR / "bank_statement.csv"
+        if st.button("✨ Load sample statement", use_container_width=True,
+                     disabled=not sample_path.exists()):
+            st.session_state["use_sample"] = True
 
-    st.divider()
     st.caption("Retrieval is exact — aggregate questions fetch the complete "
                "matching set, not a top-K sample.")
 
@@ -354,7 +371,7 @@ if uploaded is not None:
             f"Couldn't read **{uploaded.name}** as a bank statement.\n\n"
             f"{exc}\n\n"
             "Expected columns: a date, a description/merchant, and an amount "
-            "(or separate debit/credit columns). Remove the file in the sidebar "
+            "(or separate debit/credit columns). Remove the file above "
             "or load the sample instead."
         )
 elif st.session_state.get("use_sample") and sample_path.exists():
@@ -372,19 +389,6 @@ if shot_frames:
     source_label = (f"{source_label} + {n} screenshot txn" if source_label
                     else f"{n} screenshot txn") + ("s" if n != 1 else "")
 
-# ── Hero ───────────────────────────────────────────────────────────────────────
-st.markdown(
-    """
-    <div class="hero">
-      <span class="tag">Personal Finance · RAG</span>
-      <h1>Ask your money anything.</h1>
-      <p>FinSight reads a messy bank statement, categorizes every transaction,
-         and answers questions with grounded, auditable totals — no hallucinated numbers.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
 if shot_df is not None and not shot_df.empty:
     with st.expander(f"📸 Read from your screenshot{'s' if len(shot_df) != 1 else ''} "
                      f"({len(shot_df)} payment{'s' if len(shot_df) != 1 else ''})", expanded=True):
@@ -398,7 +402,7 @@ if df is None:
         '<div style="text-align:center;padding:3rem 1rem;color:#7a8699">'
         '<div style="font-size:3rem">📊</div>'
         '<h3 style="font-weight:700;margin:.4rem 0">Load a statement to begin</h3>'
-        '<p style="max-width:440px;margin:0 auto">Use the sidebar to upload your own CSV, '
+        '<p style="max-width:440px;margin:0 auto">Use the panel above to upload your own CSV, '
         'or click <b style="color:#009f7a">Load sample statement</b> to explore a demo dataset instantly.</p>'
         '</div>',
         unsafe_allow_html=True,
