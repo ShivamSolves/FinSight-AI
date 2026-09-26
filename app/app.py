@@ -664,33 +664,147 @@ with dash_tab:
 
 # ·· TRANSACTIONS ··
 with txn_tab:
-    f1, f2 = st.columns([2, 1])
-    with f1:
-        search = st.text_input("🔍 Search description", placeholder="swiggy, rent, salary…",
+
+    # ── Filter bar ────────────────────────────────────────────────────────────
+    fa, fb, fc = st.columns([3, 2, 1])
+    with fa:
+        search = st.text_input("Search", placeholder="🔍  Search merchant or category…",
                                label_visibility="collapsed")
-    with f2:
+    with fb:
         cats = st.multiselect("Category", sorted(df["category"].unique()),
                               label_visibility="collapsed", placeholder="All categories")
+    with fc:
+        only_type = st.selectbox("Type", ["All", "Debit", "Credit"],
+                                 label_visibility="collapsed")
 
     view = df.copy()
     if search:
         view = view[view["description"].str.contains(search, case=False, na=False)]
     if cats:
         view = view[view["category"].isin(cats)]
+    if only_type == "Debit":
+        view = view[view["transaction_type"] == "debit"]
+    elif only_type == "Credit":
+        view = view[view["transaction_type"] == "credit"]
     view = view.sort_values("date", ascending=False)
 
-    st.caption(f"Showing {len(view)} of {n_txn} transactions")
-    display = pd.DataFrame({
-        "Date":        view["date"].dt.strftime("%Y-%m-%d"),
-        "Description": view["description"],
-        "Category":    view["category"],
-        "Type":        view["transaction_type"],
-        "Amount":      view["amount"].map(lambda x: f"{S}{x:,.2f}"),
-    })
-    st.dataframe(
-        display, use_container_width=True, hide_index=True, height=520,
-        column_config={
-            "Category": st.column_config.TextColumn("Category", width="medium"),
-            "Amount":   st.column_config.TextColumn("Amount",   width="small"),
-        },
+    # ── Summary strip ─────────────────────────────────────────────────────────
+    v_spend  = view[view["amount"] < 0]["amount"].abs().sum()
+    v_income = view[view["amount"] > 0]["amount"].sum()
+    st.markdown(
+        f'<div style="display:flex;gap:12px;margin:8px 0 14px;flex-wrap:wrap">'
+        f'  <div style="background:#fff0f3;border:1px solid #f9c0cc;border-radius:10px;'
+        f'       padding:8px 14px;font-size:.82rem">'
+        f'    <span style="color:#8a94a6;font-weight:600">DEBITS</span>&nbsp;&nbsp;'
+        f'    <span style="color:#e0567a;font-weight:700;font-size:1rem">{S}{v_spend:,.0f}</span>'
+        f'  </div>'
+        f'  <div style="background:#f0fdf7;border:1px solid #b5ecd9;border-radius:10px;'
+        f'       padding:8px 14px;font-size:.82rem">'
+        f'    <span style="color:#8a94a6;font-weight:600">CREDITS</span>&nbsp;&nbsp;'
+        f'    <span style="color:#009f7a;font-weight:700;font-size:1rem">{S}{v_income:,.0f}</span>'
+        f'  </div>'
+        f'  <div style="background:#f5f6fc;border:1px solid #e2e4ea;border-radius:10px;'
+        f'       padding:8px 14px;font-size:.82rem">'
+        f'    <span style="color:#8a94a6;font-weight:600">SHOWING</span>&nbsp;&nbsp;'
+        f'    <span style="color:#233048;font-weight:700;font-size:1rem">{len(view)} txns</span>'
+        f'  </div>'
+        f'</div>',
+        unsafe_allow_html=True,
     )
+
+    # ── Category icon map ─────────────────────────────────────────────────────
+    CAT_ICON  = {
+        "Groceries": "🛒", "Food & Dining": "🍽️", "Transport": "🚗",
+        "Utilities": "⚡", "Subscriptions": "📱", "Shopping": "🛍️",
+        "Healthcare": "💊", "Rent/Housing": "🏠", "Entertainment": "🎬",
+        "Savings/Transfer": "💰", "Income": "💵", "Other": "📋",
+        "Uncategorized": "❓",
+    }
+    CAT_COLOR = {
+        "Groceries": "#e4faf3", "Food & Dining": "#fff4e6", "Transport": "#eef4fb",
+        "Utilities": "#fffbe6", "Subscriptions": "#f3f0ff", "Shopping": "#fff0f9",
+        "Healthcare": "#fff0f0", "Rent/Housing": "#eef4fb", "Entertainment": "#fdf3ff",
+        "Savings/Transfer": "#f0fdf7", "Income": "#f0fdf7", "Other": "#f5f6fc",
+        "Uncategorized": "#f5f6fc",
+    }
+    CAT_TEXT  = {
+        "Groceries": "#009f7a", "Food & Dining": "#c06a00", "Transport": "#2f7494",
+        "Utilities": "#a07800", "Subscriptions": "#6672d8", "Shopping": "#c0287a",
+        "Healthcare": "#c02828", "Rent/Housing": "#2f7494", "Entertainment": "#8040a0",
+        "Savings/Transfer": "#009f7a", "Income": "#009f7a", "Other": "#64748f",
+        "Uncategorized": "#64748f",
+    }
+
+    # ── Group by month and render cards ───────────────────────────────────────
+    view["_month"] = view["date"].dt.strftime("%B %Y")
+    months_order = view["_month"].unique()
+
+    for month in months_order:
+        month_rows = view[view["_month"] == month]
+        month_spend = month_rows[month_rows["amount"] < 0]["amount"].abs().sum()
+
+        st.markdown(
+            f'<div style="display:flex;justify-content:space-between;align-items:center;'
+            f'margin:20px 0 8px">'
+            f'  <span style="font-family:\'Bricolage Grotesque\',\'Figtree\',sans-serif;'
+            f'    font-weight:700;font-size:.95rem;color:#233048">{month}</span>'
+            f'  <span style="font-size:.78rem;color:#8a94a6;font-weight:600">'
+            f'    {S}{month_spend:,.0f} spent</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Build all rows for this month as one HTML block (fast — no per-row rerenders)
+        rows_html = '<div style="background:#ffffff;border-radius:16px;overflow:hidden;' \
+                    'box-shadow:0 2px 12px rgba(0,0,0,.06)">'
+
+        for i, (_, row) in enumerate(month_rows.iterrows()):
+            icon      = CAT_ICON.get(row["category"], "💳")
+            bg        = CAT_COLOR.get(row["category"], "#f5f6fc")
+            pill_bg   = CAT_COLOR.get(row["category"], "#f5f6fc")
+            pill_fg   = CAT_TEXT.get(row["category"], "#64748f")
+            name      = row["description"][:38]
+            date_s    = pd.Timestamp(row["date"]).strftime("%d %b")
+            is_credit = row["amount"] > 0
+            amt_color = "#009f7a" if is_credit else "#e0567a"
+            amt_sign  = "+" if is_credit else "−"
+            amt_txt   = f"{amt_sign}{S}{abs(row['amount']):,.0f}"
+            type_txt  = "Credit" if is_credit else "Debit"
+            type_bg   = "#f0fdf7" if is_credit else "#fff0f3"
+            type_fg   = "#009f7a" if is_credit else "#e0567a"
+            border    = "border-top:1px solid #f5f6fc;" if i > 0 else ""
+
+            rows_html += (
+                f'<div style="display:flex;align-items:center;gap:12px;'
+                f'padding:13px 16px;{border}">'
+
+                # Icon bubble
+                f'<div style="width:42px;height:42px;border-radius:12px;background:{bg};'
+                f'display:flex;align-items:center;justify-content:center;'
+                f'font-size:1.15rem;flex-shrink:0">{icon}</div>'
+
+                # Name + meta
+                f'<div style="flex:1;min-width:0">'
+                f'  <div style="font-weight:600;font-size:.88rem;color:#1a1f2e;'
+                f'    white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{name}</div>'
+                f'  <div style="display:flex;align-items:center;gap:6px;margin-top:3px">'
+                f'    <span style="background:{pill_bg};color:{pill_fg};border-radius:6px;'
+                f'      padding:1px 7px;font-size:.68rem;font-weight:700">{row["category"]}</span>'
+                f'    <span style="font-size:.72rem;color:#aab0bc">{date_s}</span>'
+                f'  </div>'
+                f'</div>'
+
+                # Amount + type
+                f'<div style="text-align:right;flex-shrink:0">'
+                f'  <div style="font-family:\'Bricolage Grotesque\',\'Figtree\',sans-serif;'
+                f'    font-weight:700;font-size:.95rem;color:{amt_color}">{amt_txt}</div>'
+                f'  <div style="background:{type_bg};color:{type_fg};border-radius:6px;'
+                f'    padding:1px 7px;font-size:.67rem;font-weight:700;'
+                f'    margin-top:3px;display:inline-block">{type_txt}</div>'
+                f'</div>'
+
+                f'</div>'
+            )
+
+        rows_html += '</div>'
+        st.markdown(rows_html, unsafe_allow_html=True)

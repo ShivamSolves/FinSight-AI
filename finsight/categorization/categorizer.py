@@ -107,6 +107,13 @@ RULES: list[tuple[str, list[str]]] = [
         "kirana",
         "vegetables",
         "fruits and vegetables",
+        "mart",                 # catches "Dmart", "Freshmart", "Reliance Mart" etc.
+        "provision shop",       # specific enough to avoid "Mobile Shop" etc.
+        "veggie shop",
+        "vegetable shop",
+        "grocery shop",
+        "provisions",
+        "bazaar",
     ]),
 
     # ── Food & Dining ─────────────────────────────────────────────────────────
