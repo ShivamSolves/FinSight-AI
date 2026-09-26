@@ -24,6 +24,7 @@ data/chroma_db/
 
 # Processed outputs (regenerated from raw CSV)
 data/processed/
+data/raw/generated_statement.csv
 
 # Virtual environments
 venv/
