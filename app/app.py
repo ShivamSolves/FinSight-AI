@@ -28,6 +28,10 @@ from finsight.config import RAW_DIR
 from finsight.embeddings.vector_store import build_vector_store
 from finsight.ingestion.csv_extractor import load_csv
 from finsight.ingestion.pdf_extractor import load_pdf
+from finsight.ingestion.screenshot_extractor import (
+    ScreenshotExtractionError,
+    extract_transactions_from_image,
+)
 from finsight.rag.local_answer import summarize_hits
 from finsight.rag.qa_pipeline import ask, retrieve
 
@@ -197,6 +201,19 @@ def _load_sample(path_str: str) -> pd.DataFrame:
     return categorize_dataframe(load_csv(path_str))
 
 
+_SHOT_MIME = {
+    "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+    "webp": "image/webp", "heic": "image/heic",
+}
+
+
+@st.cache_data(show_spinner="Reading payment screenshot…")
+def _extract_screenshot(name: str, data: bytes) -> pd.DataFrame:
+    """Cached so a Streamlit rerun never re-calls Gemini for the same image."""
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else "png"
+    return extract_transactions_from_image(data, _SHOT_MIME.get(ext, "image/png"))
+
+
 def ensure_store(df: pd.DataFrame) -> None:
     """Build the vector store once per distinct dataset (embeddings are costly)."""
     sig = f"{len(df)}_{df['amount'].sum():.2f}_{df['date'].min()}_{df['date'].max()}"
@@ -212,7 +229,11 @@ def has_llm_key() -> bool:
         load_dotenv()
     except ImportError:
         pass
-    return bool(os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"))
+    return bool(
+        os.environ.get("GEMINI_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    )
 
 
 def money(x: float) -> str:
@@ -234,10 +255,26 @@ with st.sidebar:
         st.session_state["use_sample"] = True
 
     st.divider()
-    st.markdown("**2 · Engine**")
+    st.markdown("**2 · Add a payment screenshot**")
+    shots = st.file_uploader(
+        "UPI / bank payment screenshot (Gemini reads amount, payee, UTR)",
+        type=["png", "jpg", "jpeg", "webp"],
+        accept_multiple_files=True,
+        label_visibility="collapsed",
+        key="shot_uploader",
+    )
+    shot_frames: list[pd.DataFrame] = []
+    for shot in shots or []:
+        try:
+            shot_frames.append(_extract_screenshot(shot.name, shot.getvalue()))
+        except ScreenshotExtractionError as exc:
+            st.warning(f"**{shot.name}**: {exc}")
+
+    st.divider()
+    st.markdown("**3 · Engine**")
     if has_llm_key():
         st.markdown('<span class="scope-badge">🟢 LLM connected</span> '
-                    '<span style="font-size:.8rem;color:#7a8699">answers via GPT</span>',
+                    '<span style="font-size:.8rem;color:#7a8699">answers via Gemini</span>',
                     unsafe_allow_html=True)
     else:
         st.markdown('<span class="scope-badge">⚡ Offline mode</span> '
@@ -270,6 +307,15 @@ elif st.session_state.get("use_sample") and sample_path.exists():
 else:
     source_label = None
 
+# ── Merge any transactions read from payment screenshots ───────────────────────
+shot_df = None
+if shot_frames:
+    shot_df = categorize_dataframe(pd.concat(shot_frames, ignore_index=True))
+    df = shot_df if df is None else pd.concat([df, shot_df], ignore_index=True)
+    n = len(shot_df)
+    source_label = (f"{source_label} + {n} screenshot txn" if source_label
+                    else f"{n} screenshot txn") + ("s" if n != 1 else "")
+
 # ── Hero ───────────────────────────────────────────────────────────────────────
 st.markdown(
     """
@@ -282,6 +328,14 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+if shot_df is not None and not shot_df.empty:
+    with st.expander(f"📸 Read from your screenshot{'s' if len(shot_df) != 1 else ''} "
+                     f"({len(shot_df)} payment{'s' if len(shot_df) != 1 else ''})", expanded=True):
+        preview = shot_df[["date", "description", "amount", "category"]].copy()
+        preview["date"] = preview["date"].dt.strftime("%d %b %Y")
+        preview["amount"] = preview["amount"].map(lambda x: f"{S}{abs(x):,.2f} out")
+        st.dataframe(preview, hide_index=True, use_container_width=True)
 
 if df is None:
     st.markdown(
