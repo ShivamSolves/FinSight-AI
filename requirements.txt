@@ -24,6 +24,7 @@ python-dotenv==1.0.1
 # UI (Streamlit app + charts)
 streamlit==1.36.0
 altair==5.5.0
+plotly==5.22.0
 
 # Evaluation helpers
 scikit-learn==1.5.1

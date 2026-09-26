@@ -27,7 +27,9 @@ _ROOT = Path(__file__).parent.parent   # …/finsight-ai/
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import altair as alt
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 import streamlit as st
 
@@ -511,87 +513,154 @@ with dash_tab:
         st.markdown("##### Spending by category")
         cat = spend_df.groupby("category")["abs_amount"].sum().reset_index()
         cat = cat.sort_values("abs_amount", ascending=False)
-        donut = (
-            alt.Chart(cat)
-            .mark_arc(innerRadius=62, outerRadius=110, stroke="#ffffff", strokeWidth=2)
-            .encode(
-                theta=alt.Theta("abs_amount:Q"),
-                color=alt.Color("category:N", legend=None,
-                                scale=alt.Scale(range=CATEGORY_COLORS)),
-                tooltip=["category:N", alt.Tooltip("abs_amount:Q", format=",.0f")],
-            )
-            .properties(height=320)
-        )
-        total_lbl = alt.Chart(pd.DataFrame({"t": [total_spend]})).mark_text(
-            text=money(total_spend), fontSize=20, fontWeight=700, color="#233048", dy=-6
-        ).properties(height=320)
-        sub_lbl = alt.Chart(pd.DataFrame({"t": [total_spend]})).mark_text(
-            text="total spend", fontSize=12, color="#7a8699", dy=16
-        ).properties(height=320)
-        st.altair_chart((donut + total_lbl + sub_lbl).configure(background="transparent"),
-                        use_container_width=True)
 
-        legend = "  ".join(
-            f'<span style="color:{CATEGORY_COLORS[i % len(CATEGORY_COLORS)]}">●</span> {c}'
-            for i, c in enumerate(cat["category"])
+        fig_donut = go.Figure(go.Pie(
+            labels=cat["category"],
+            values=cat["abs_amount"],
+            hole=0.55,
+            marker=dict(colors=CATEGORY_COLORS[:len(cat)], line=dict(color="#ffffff", width=2)),
+            textinfo="percent",
+            hovertemplate="<b>%{label}</b><br>₹%{value:,.0f}<br>%{percent}<extra></extra>",
+        ))
+        fig_donut.add_annotation(
+            text=f"<b>{money(total_spend)}</b>",
+            x=0.5, y=0.52, font=dict(size=18, color="#233048", family="Bricolage Grotesque"),
+            showarrow=False,
         )
-        st.markdown(f'<div style="font-size:.78rem;line-height:1.9">{legend}</div>',
-                    unsafe_allow_html=True)
+        fig_donut.add_annotation(
+            text="total spend",
+            x=0.5, y=0.42, font=dict(size=12, color="#7a8699", family="Figtree"),
+            showarrow=False,
+        )
+        fig_donut.update_layout(
+            showlegend=True,
+            legend=dict(orientation="v", x=1.02, y=0.5,
+                        font=dict(family="Figtree", size=11, color="#233048")),
+            margin=dict(t=10, b=10, l=10, r=10),
+            height=340,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        st.plotly_chart(fig_donut, use_container_width=True)
 
     with right:
-        st.markdown("##### Cash flow by month")
+        st.markdown("##### Monthly cash flow")
         tmp = df.copy()
         tmp["month"] = tmp["date"].dt.to_period("M").dt.to_timestamp()
-        tmp["signed_spend"] = tmp["amount"].clip(upper=0).abs()
         monthly = tmp.groupby("month").apply(
             lambda g: pd.Series({
-                "Spending": g["signed_spend"].sum(),
                 "Income":   g["amount"].clip(lower=0).sum(),
+                "Spending": g["amount"].clip(upper=0).abs().sum(),
             }), include_groups=False
         ).reset_index()
-        long = monthly.melt("month", var_name="Flow", value_name="Amount")
-        trend = (
-            alt.Chart(long)
-            .mark_area(interpolate="monotone", line=True, opacity=0.85)
-            .encode(
-                x=alt.X("month:T", title=None),
-                y=alt.Y("Amount:Q", title=None, axis=alt.Axis(format="~s")),
-                color=alt.Color("Flow:N", scale=alt.Scale(
-                    domain=["Spending", "Income"], range=[ROSE, GREEN]), legend=None),
-                tooltip=["month:T", "Flow:N", alt.Tooltip("Amount:Q", format=",.0f")],
-            )
-            .properties(height=300)
-            .configure(background="transparent")
-        )
-        st.altair_chart(trend, use_container_width=True)
-        monthly["net"] = monthly["Income"] - monthly["Spending"]
-        peak_spend_month = monthly.loc[monthly["Spending"].idxmax(), "month"]
-        best_save_month  = monthly.loc[monthly["net"].idxmax(), "month"]
-        ml, mr = st.columns(2)
-        ml.markdown(f'<div class="kpi"><div class="label">Peak spend month</div>'
-                    f'<div class="value" style="font-size:1.2rem;color:{ROSE}">'
-                    f'{peak_spend_month:%b %Y}</div></div>', unsafe_allow_html=True)
-        mr.markdown(f'<div class="kpi"><div class="label">Best saving month</div>'
-                    f'<div class="value" style="font-size:1.2rem;color:{GREEN}">'
-                    f'{best_save_month:%b %Y}</div></div>', unsafe_allow_html=True)
+        monthly["Net"] = monthly["Income"] - monthly["Spending"]
+        monthly["month_label"] = monthly["month"].dt.strftime("%b %Y")
 
-    st.markdown("##### Top merchants")
-    merch = spend_df.groupby("description")["abs_amount"].sum().reset_index()
-    merch = merch.sort_values("abs_amount", ascending=False).head(8)
-    bars = (
-        alt.Chart(merch)
-        .mark_bar(cornerRadius=6)
-        .encode(
-            x=alt.X("abs_amount:Q", title=None, axis=alt.Axis(format="~s")),
-            y=alt.Y("description:N", sort="-x", title=None),
-            color=alt.Color("description:N", legend=None,
-                            scale=alt.Scale(range=[INDIGO, VIOLET, FUCHSIA])),
-            tooltip=["description:N", alt.Tooltip("abs_amount:Q", format=",.0f")],
+        fig_flow = go.Figure()
+        fig_flow.add_trace(go.Bar(
+            name="Income",
+            x=monthly["month_label"], y=monthly["Income"],
+            marker_color=GREEN, marker_line_width=0,
+            hovertemplate="Income<br>₹%{y:,.0f}<extra></extra>",
+        ))
+        fig_flow.add_trace(go.Bar(
+            name="Spending",
+            x=monthly["month_label"], y=monthly["Spending"],
+            marker_color=ROSE, marker_line_width=0,
+            hovertemplate="Spending<br>₹%{y:,.0f}<extra></extra>",
+        ))
+        fig_flow.add_trace(go.Scatter(
+            name="Net",
+            x=monthly["month_label"], y=monthly["Net"],
+            mode="lines+markers",
+            line=dict(color=INDIGO, width=2.5, dash="dot"),
+            marker=dict(size=8, color=INDIGO),
+            hovertemplate="Net<br>₹%{y:,.0f}<extra></extra>",
+        ))
+        fig_flow.update_layout(
+            barmode="group",
+            bargap=0.25,
+            legend=dict(orientation="h", x=0, y=1.08,
+                        font=dict(family="Figtree", size=11)),
+            xaxis=dict(tickfont=dict(family="Figtree", size=11), showgrid=False),
+            yaxis=dict(tickformat="~s", tickprefix="₹",
+                       tickfont=dict(family="Figtree", size=11), gridcolor="#f0f0f0"),
+            margin=dict(t=40, b=10, l=0, r=0),
+            height=340,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
         )
-        .properties(height=320)
-        .configure(background="transparent")
+        st.plotly_chart(fig_flow, use_container_width=True)
+
+        monthly_display = monthly[["month_label", "Income", "Spending", "Net"]].copy()
+        for col in ["Income", "Spending", "Net"]:
+            monthly_display[col] = monthly_display[col].map(lambda x: f"₹{x:,.0f}")
+        monthly_display = monthly_display.rename(columns={"month_label": "Month"})
+        st.dataframe(monthly_display, hide_index=True, use_container_width=True)
+
+    # ── Top merchants ──────────────────────────────────────────────────────────
+    st.markdown("##### Top merchants by spend")
+    merch = spend_df.groupby("description")["abs_amount"].sum().reset_index()
+    merch = merch.sort_values("abs_amount", ascending=False).head(10)
+    merch["label"] = merch["amount_fmt"] = merch["abs_amount"].map(lambda x: f"₹{x:,.0f}")
+
+    fig_merch = go.Figure(go.Bar(
+        x=merch["abs_amount"],
+        y=merch["description"],
+        orientation="h",
+        marker=dict(
+            color=merch["abs_amount"],
+            colorscale=[[0, "#bcc7f6"], [0.5, "#2f7494"], [1, "#00cf9e"]],
+            showscale=False,
+            line=dict(width=0),
+        ),
+        text=merch["label"],
+        textposition="outside",
+        textfont=dict(family="Figtree", size=11, color="#233048"),
+        hovertemplate="<b>%{y}</b><br>₹%{x:,.0f}<extra></extra>",
+        cliponaxis=False,
+    ))
+    fig_merch.update_layout(
+        xaxis=dict(visible=False),
+        yaxis=dict(
+            tickfont=dict(family="Figtree", size=11, color="#233048"),
+            autorange="reversed",
+        ),
+        margin=dict(t=10, b=10, l=0, r=80),
+        height=360,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
     )
-    st.altair_chart(bars, use_container_width=True)
+    st.plotly_chart(fig_merch, use_container_width=True)
+
+    # ── Spending trend per category ────────────────────────────────────────────
+    st.markdown("##### Category spend over time")
+    tmp2 = spend_df.copy()
+    tmp2["month"] = tmp2["date"].dt.to_period("M").dt.to_timestamp()
+    cat_trend = tmp2.groupby(["month", "category"])["abs_amount"].sum().reset_index()
+    cat_trend["month_label"] = cat_trend["month"].dt.strftime("%b %Y")
+
+    fig_trend = px.line(
+        cat_trend,
+        x="month_label", y="abs_amount", color="category",
+        markers=True,
+        color_discrete_sequence=CATEGORY_COLORS,
+        labels={"abs_amount": "Amount (₹)", "month_label": "", "category": "Category"},
+        hover_data={"abs_amount": ":,.0f"},
+    )
+    fig_trend.update_traces(line=dict(width=2.2), marker=dict(size=7))
+    fig_trend.update_layout(
+        legend=dict(orientation="h", y=-0.25, x=0,
+                    font=dict(family="Figtree", size=10)),
+        xaxis=dict(tickfont=dict(family="Figtree", size=11), showgrid=False),
+        yaxis=dict(tickformat="~s", tickprefix="₹",
+                   tickfont=dict(family="Figtree", size=11), gridcolor="#f0f0f0"),
+        margin=dict(t=10, b=10, l=0, r=0),
+        height=320,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    st.plotly_chart(fig_trend, use_container_width=True)
 
 # ·· TRANSACTIONS ··
 with txn_tab:
